@@ -1,7 +1,10 @@
 [project]
 name = "ff-custom-arena"
 version = "0.1.0"
-dependencies = []
+dependencies = [
+    "flask",
+    "python-dotenv"
+]
 
 [tool.vercel]
 entrypoint = "run:app"
