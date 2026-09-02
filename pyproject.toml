@@ -4,8 +4,8 @@ version = "0.1.0"
 dependencies = [
     "flask",
     "flask-login",
-    "flask-sqlalchemy",
     "flask-cors",
+    "flask-sqlalchemy",
     "python-dotenv",
     "requests"
 ]
