@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}404 — Page Not Found | {{ site_name }}{% endblock %}
+{% block content %}
+<div class="error-page-wrapper">
+  <div class="error-content">
+    <div class="error-code">404</div>
+    <div class="error-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+    <h1 class="error-title">Zone Not Found</h1>
+    <p class="error-msg">The page you're looking for has been eliminated or never existed on this battlefield.</p>
+    <div class="error-actions">
+      <a href="{{ url_for('main.home') }}" class="btn btn-primary"><i class="fa-solid fa-house"></i> Return to Base</a>
+      <a href="{{ url_for('tournaments.list_tournaments') }}" class="btn btn-secondary"><i class="fa-solid fa-trophy"></i> View Tournaments</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

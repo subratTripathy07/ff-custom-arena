@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Data Export | Admin Control Center{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="page-header mb-4">
+    <h1 class="page-title"><i class="fa-solid fa-file-export text-neon-success"></i> Reports & Data Export Hub</h1>
+    <p class="page-subtitle">Download official spreadsheets (CSV) or professional printable PDF documents across all platform domains.</p>
+  </div>
+
+  <div class="row g-4">
+    <!-- User & Team Reports -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-users fa-3x text-neon-primary mb-3"></i>
+          <h4>Users & Players Directory</h4>
+          <p class="text-muted small">Registered players, verification status, roles, and login history.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='users') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='users') }}" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-people-group fa-3x text-neon-accent mb-3"></i>
+          <h4>Teams & Rosters Report</h4>
+          <p class="text-muted small">Active squads, tags, captains, and roster member counts.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='teams') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='teams') }}" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tournaments Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-trophy fa-3x text-neon-warning mb-3"></i>
+          <h4>Tournaments Master Directory</h4>
+          <p class="text-muted small">Game modes, maps, fees, prize pools, schedules, and statuses.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='tournaments') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='tournaments') }}" class="btn btn-warning btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registrations Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-clipboard-list fa-3x text-neon-info mb-3"></i>
+          <h4>Tournament Registrations</h4>
+          <p class="text-muted small">Registration codes, slotted teams, and entry verification status.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='registrations') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='registrations') }}" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payments Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-indian-rupee-sign fa-3x text-neon-success mb-3"></i>
+          <h4>Financial & Payments Ledger</h4>
+          <p class="text-muted small">Entry fees, UTR transaction numbers, and verification audit trail.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='payments') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='payments') }}" class="btn btn-success btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prize Payouts Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-coins fa-3x text-neon-warning mb-3"></i>
+          <h4>Prize Distribution Report</h4>
+          <p class="text-muted small">Allocated prize pools, winners, payout references, and dates.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='prizes') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='prizes') }}" class="btn btn-warning btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match Results Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-check-to-slot fa-3x text-neon-primary mb-3"></i>
+          <h4>Match Results & Scores</h4>
+          <p class="text-muted small">Verified scoreboard scores, placements, and kill points earned.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='results') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='results') }}" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disputes Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-between">
+        <div>
+          <i class="fa-solid fa-triangle-exclamation fa-3x text-neon-danger mb-3"></i>
+          <h4>Disputes Moderation Log</h4>
+          <p class="text-muted small">Match incidents, captain complaints, and referee decisions.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{{ url_for('admin.download_report', entity='disputes') }}" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </a>
+          <a href="{{ url_for('admin.download_pdf_report', entity='disputes') }}" class="btn btn-danger btn-sm flex-grow-1">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

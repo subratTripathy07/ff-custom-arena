@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Manage {{ tournament.name }} | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header Bar -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <a href="{{ url_for('admin.list_tournaments') }}" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-arrow-left"></i> Tournaments
+        </a>
+        <span class="badge badge-{{ 'success' if tournament.status == 'registration_open' else 'danger' if tournament.status == 'live' else 'secondary' }}">
+          {{ tournament.status.replace('_', ' ').title() }}
+        </span>
+      </div>
+      <h1 class="page-title mb-0">{{ tournament.name }}</h1>
+      <small class="text-muted">
+        Mode: <strong>{{ tournament.game_mode or 'BR' }}</strong> | Map: <strong>{{ tournament.map_name or 'Bermuda' }}</strong> | Slots: <strong>{{ tournament.registered_team_count }}/{{ tournament.max_teams }}</strong>
+      </small>
+    </div>
+
+    <div class="d-flex gap-2">
+      <!-- Status Change Dropdown -->
+      <div class="dropdown">
+        <button class="btn btn-warning btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fa-solid fa-signal"></i> Change Status
+        </button>
+        <ul class="dropdown-menu dropdown-menu-dark">
+          <li>
+            <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=tournament.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="registration_open">
+              <button class="dropdown-item text-success">Registration Open</button>
+            </form>
+          </li>
+          <li>
+            <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=tournament.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="closing_soon">
+              <button class="dropdown-item text-warning">Closing Soon</button>
+            </form>
+          </li>
+          <li>
+            <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=tournament.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="live">
+              <button class="dropdown-item text-danger">🔴 Live Now</button>
+            </form>
+          </li>
+          <li>
+            <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=tournament.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="completed">
+              <button class="dropdown-item text-info">Completed</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+
+      <a href="{{ url_for('admin.edit_tournament', tournament_id=tournament.id) }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-pen"></i> Edit Settings
+      </a>
+      <a href="{{ url_for('tournaments.detail', slug=tournament.slug) }}" class="btn btn-primary btn-sm" target="_blank">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> Player View
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Match Scheduler & Matches List -->
+    <div class="col-lg-6">
+      <!-- Match Scheduler Form -->
+      <div class="glass-panel p-4 mb-4">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-calendar-plus text-neon-primary"></i> Schedule New Match</h3>
+        <form method="POST" action="{{ url_for('competition.create_match') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small">Match #:</label>
+              <input type="number" name="match_number" class="form-control form-control-sm" min="1" value="{{ matches|length + 1 }}" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Round #:</label>
+              <input type="number" name="round_number" class="form-control form-control-sm" min="1" value="1" required>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small">Schedule Date & Time:</label>
+              <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Map:</label>
+              <select name="map_name" class="form-select form-select-sm">
+                {% for mp in maps %}
+                  <option value="{{ mp }}" {{ 'selected' if tournament.map_name == mp else '' }}>{{ mp }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="auto_slot" value="1" id="autoSlotCheck" checked>
+            <label class="form-check-label small" for="autoSlotCheck">
+              Auto-assign all currently confirmed teams to this match slots
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="fa-solid fa-plus"></i> Schedule Match
+          </button>
+        </form>
+      </div>
+
+      <!-- Matches List -->
+      <div class="glass-panel p-4 mb-4">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-crosshairs text-neon-info"></i> Tournament Matches ({{ matches|length }})</h3>
+        {% if matches %}
+          <div class="matches-admin-list">
+            {% for m in matches %}
+              <div class="glass-panel p-3 mb-2 d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="badge badge-secondary badge-sm">Round {{ m.round_number }}</span>
+                  <span class="badge badge-{{ 'danger' if m.status == 'live' else 'success' if m.status == 'completed' else 'warning' if m.status.startswith('room') else 'primary' }} badge-sm">
+                    {{ m.status.replace('_', ' ').title() }}
+                  </span>
+                  <h5 class="mb-0 mt-1">Match #{{ m.match_number }} ({{ m.map_name or 'Bermuda' }})</h5>
+                  <small class="text-muted">{{ m.scheduled_date.strftime('%d %b') }} at {{ m.scheduled_time.strftime('%I:%M %p') }} | {{ m.match_teams.count() }} Teams</small>
+                </div>
+                <div class="d-flex gap-1">
+                  <form method="POST" action="{{ url_for('competition.auto_slot_teams', match_id=m.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-secondary btn-sm py-0" title="Auto-slot confirmed teams">
+                      <i class="fa-solid fa-user-plus"></i> Slot
+                    </button>
+                  </form>
+                  <a href="{{ url_for('competition.match_detail', match_id=m.id) }}" class="btn btn-primary btn-sm py-0" title="Open Match Room">
+                    <i class="fa-solid fa-key"></i> Room
+                  </a>
+                  <form method="POST" action="{{ url_for('competition.delete_match', match_id=m.id) }}" onsubmit="return confirm('Delete this match?');" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger btn-sm py-0" title="Delete Match">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted text-center py-3">No matches scheduled yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: Registrations & Payments -->
+    <div class="col-lg-6">
+      <div class="glass-panel p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="section-title mb-0"><i class="fa-solid fa-users text-neon-success"></i> Team Registrations ({{ registrations|length }})</h3>
+          <a href="{{ url_for('admin.download_report', entity='registrations', tournament_id=tournament.id) }}" class="btn btn-ghost btn-sm">
+            <i class="fa-solid fa-download"></i> Export CSV
+          </a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table custom-table">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Reg Code</th>
+                <th>Status</th>
+                <th>Payment / Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for reg in registrations %}
+                <tr>
+                  <td>
+                    <strong>{{ reg.team.name }}</strong>
+                    <br><small class="text-muted">Cap: @{{ reg.team.captain.username if reg.team.captain else 'N/A' }}</small>
+                  </td>
+                  <td><code>{{ reg.registration_code }}</code></td>
+                  <td>
+                    <span class="badge badge-{{ 'success' if reg.status == 'confirmed' else 'warning' if reg.status == 'pending' else 'danger' }} badge-sm">
+                      {{ reg.status.title() }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if reg.payment %}
+                      {% if reg.payment.status == 'verification_required' %}
+                        <form method="POST" action="{{ url_for('admin.review_payment', payment_id=reg.payment.id) }}" class="d-flex gap-1 flex-wrap">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit" name="decision" value="verified" class="btn btn-success btn-sm py-0">Approve</button>
+                          <button type="submit" name="decision" value="rejected" class="btn btn-danger btn-sm py-0">Reject</button>
+                        </form>
+                      {% else %}
+                        <span class="badge badge-{{ 'success' if reg.payment.status == 'verified' else 'secondary' }} badge-sm">
+                          ₹{{ reg.payment.amount }} ({{ reg.payment.status.title() }})
+                        </span>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted small">Free Entry</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-muted text-center py-3">No teams registered yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Prize Pool Allocation Box -->
+      <div class="glass-panel p-4">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-coins text-neon-warning"></i> Prize Distribution</h3>
+        <form method="POST" action="{{ url_for('admin.list_prizes') }}" class="row g-2 mb-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+          
+          <div class="col-5">
+            <select name="team_id" class="form-select form-select-sm" required>
+              <option value="">Select Team</option>
+              {% for reg in registrations %}
+                <option value="{{ reg.team.id }}">{{ reg.team.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-3">
+            <input type="number" name="rank" class="form-control form-control-sm" placeholder="Rank (1, 2...)" min="1" required>
+          </div>
+          <div class="col-4">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">₹</span>
+              <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" min="1" required>
+              <button class="btn btn-warning" type="submit"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+        </form>
+
+        {% if prizes %}
+          <div class="table-responsive">
+            <table class="table custom-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Team</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pr in prizes %}
+                  <tr>
+                    <td><strong>#{{ pr.rank }}</strong></td>
+                    <td>{{ pr.team.name }}</td>
+                    <td class="text-neon-success font-bold">₹{{ pr.amount }}</td>
+                    <td>
+                      <span class="badge badge-{{ 'success' if pr.status == 'paid' else 'warning' if pr.status == 'processing' else 'secondary' }} badge-sm">
+                        {{ pr.status.title() }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

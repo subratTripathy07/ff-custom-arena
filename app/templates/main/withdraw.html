@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Withdraw Money | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div style="min-height: 100vh; background: #070314; color: #0f172a; padding-bottom: 60px; font-family: system-ui, -apple-system, sans-serif;">
+  
+  <!-- Header Bar matching Screenshot 5 -->
+  <div style="background: #0f0826; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <a href="{{ url_for('payments.my_payments') }}" style="color: #ffffff; text-decoration: none; font-size: 1.3rem;">
+        <i class="fa-solid fa-arrow-left"></i>
+      </a>
+      <h2 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: #ffffff;">Withdraw Money</h2>
+    </div>
+  </div>
+
+  <!-- Subheader -->
+  <div style="text-align: center; padding: 24px 16px 12px; background: #ffffff;">
+    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #1e293b;">Withdraw to UPI Cash</h3>
+  </div>
+
+  <!-- Main Withdraw Form Container matching Screenshot 5 -->
+  <div style="background: #ffffff; padding: 20px 24px 40px; max-width: 480px; margin: 0 auto; min-height: 80vh;">
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}" style="margin-bottom: 20px; border-radius: 8px; padding: 12px; font-weight: 700; font-size: 0.9rem;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('payments.withdraw_money') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- UPI Id Input -->
+      <div style="margin-bottom: 24px;">
+        <label style="display: block; font-size: 0.95rem; font-weight: 700; color: #334155; margin-bottom: 6px;">UPI Id</label>
+        <input type="text" name="upi_id" id="inputUpiId" placeholder="Enter UPI ID (e.g. 9876543210@paytm)" required
+               style="width: 100%; border: none; border-bottom: 2px solid #94a3b8; padding: 10px 4px; font-weight: 700; font-size: 1rem; color: #0f172a; outline: none; background: transparent;">
+      </div>
+
+      <!-- Quick Amount Selector Pills (50, 100, 150) -->
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px;">
+          <button type="button" onclick="selectWithdrawAmount(50)" 
+                  style="flex: 1; border: 1.5px solid #0f172a; background: #ffffff; color: #0f172a; padding: 12px 0; border-radius: 12px; font-weight: 800; font-size: 1.05rem; cursor: pointer;">
+            50
+          </button>
+          <button type="button" onclick="selectWithdrawAmount(100)" 
+                  style="flex: 1; border: 1.5px solid #0f172a; background: #ffffff; color: #0f172a; padding: 12px 0; border-radius: 12px; font-weight: 800; font-size: 1.05rem; cursor: pointer;">
+            100
+          </button>
+          <button type="button" onclick="selectWithdrawAmount(150)" 
+                  style="flex: 1; border: 1.5px solid #0f172a; background: #ffffff; color: #0f172a; padding: 12px 0; border-radius: 12px; font-weight: 800; font-size: 1.05rem; cursor: pointer;">
+            150
+          </button>
+        </div>
+        <input type="hidden" name="amount" id="inputWithdrawAmount" value="50">
+      </div>
+
+      <!-- Withdraw to Radio Options -->
+      <div style="margin-bottom: 36px;">
+        <label style="display: block; font-size: 0.95rem; font-weight: 700; color: #334155; margin-bottom: 14px;">Withdraw to</label>
+        
+        <div style="display: flex; flex-direction: column; gap: 14px; padding-left: 4px;">
+          <label style="display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1rem; color: #0f172a; cursor: pointer;">
+            <input type="radio" name="withdraw_method" value="UPI Cash" checked style="width: 20px; height: 20px; accent-color: #0f172a;">
+            UPI Cash
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1rem; color: #0f172a; cursor: pointer;">
+            <input type="radio" name="withdraw_method" value="Google Play Redeem Code" style="width: 20px; height: 20px; accent-color: #0f172a;">
+            Google Play Redeem Code
+          </label>
+        </div>
+      </div>
+
+      <!-- Bright Green Withdraw Button -->
+      <div style="margin-bottom: 40px;">
+        <button type="submit" 
+                style="width: 100%; background: #40c085; color: #ffffff; border: none; padding: 16px; border-radius: 10px; font-weight: 900; font-size: 1.05rem; letter-spacing: 0.5px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 14px rgba(64,192,133,0.3);">
+          WITHDRAW MONEY
+        </button>
+      </div>
+
+      <!-- Muted Footer Note -->
+      <div style="text-align: center; color: #64748b; font-weight: 700; font-size: 0.95rem;">
+        You can only withdraw win money.
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  function selectWithdrawAmount(val) {
+    document.getElementById('inputWithdrawAmount').value = val;
+    const buttons = document.querySelectorAll('button[onclick^="selectWithdrawAmount"]');
+    buttons.forEach(btn => {
+      if (btn.innerText.trim() === String(val)) {
+        btn.style.background = '#0f172a';
+        btn.style.color = '#ffffff';
+      } else {
+        btn.style.background = '#ffffff';
+        btn.style.color = '#0f172a';
+      }
+    });
+  }
+  // Default select 50
+  selectWithdrawAmount(50);
+</script>
+{% endblock %}

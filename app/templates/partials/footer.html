@@ -1,0 +1,45 @@
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="brand" style="margin-bottom:14px;">
+          <span class="flame"><i class="fa-solid fa-fire text-neon-primary"></i></span>
+          <span class="brand-name">FF CUSTOM ARENA</span>
+        </div>
+        <p style="max-width:320px; font-size:0.86rem; color:var(--text-muted);">
+          Premier competitive custom tournament ecosystem for Free Fire athletes. Play custom rooms, record kills, and climb global leaderboards.
+        </p>
+        <div style="margin-top:14px;">
+          <span class="system-status"><i class="fa-solid fa-circle-check"></i> ALL SYSTEMS OPERATIONAL</span>
+        </div>
+      </div>
+      <div>
+        <h4>Platform</h4>
+        <a href="{{ url_for('tournaments.list_tournaments') }}"><i class="fa-solid fa-trophy"></i> Tournaments</a>
+        <a href="{{ url_for('competition.matches') }}"><i class="fa-solid fa-crosshairs"></i> Live Matches</a>
+        <a href="{{ url_for('player.global_leaderboards') }}"><i class="fa-solid fa-ranking-star"></i> Leaderboards</a>
+        <a href="{{ url_for('teams.list_teams') }}"><i class="fa-solid fa-users"></i> Squads</a>
+      </div>
+      <div>
+        <h4>Support & Help</h4>
+        <a href="{{ url_for('main.faq') }}"><i class="fa-solid fa-circle-question"></i> FAQ & Help</a>
+        <a href="{{ url_for('main.how_it_works') }}"><i class="fa-solid fa-book-open"></i> Rules & Guide</a>
+        <a href="{{ url_for('support.tickets') }}"><i class="fa-solid fa-headset"></i> Support Tickets</a>
+      </div>
+      <div>
+        <h4>Community</h4>
+        <a href="#" target="_blank"><i class="fa-brands fa-discord" style="color:#5865F2;"></i> Discord Server</a>
+        <a href="#" target="_blank"><i class="fa-brands fa-youtube" style="color:#FF0000;"></i> YouTube Live</a>
+        <a href="#" target="_blank"><i class="fa-brands fa-instagram" style="color:#E1306C;"></i> Instagram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p style="font-weight:600; color:var(--text-secondary);">© {{ current_year }} FF Custom Arena. Play. Compete. Win.</p>
+      <p class="disclaimer" style="font-size:0.75rem; color:var(--text-muted); max-width:800px; margin:8px auto 0;">
+        FF Custom Arena is an independent, community-run esports platform.
+        Not affiliated with, endorsed by, or sponsored by Garena or Free Fire. All game trademarks belong to their respective owners.
+      </p>
+    </div>
+  </div>
+</footer>
+

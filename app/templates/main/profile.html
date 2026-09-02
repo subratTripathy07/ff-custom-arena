@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile & Statistics | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 60px;">
+  
+  <!-- Profile Header Banner -->
+  <div class="card" style="margin-bottom: 24px; padding: 24px;">
+    <div class="grid grid-2" style="grid-template-columns: 2fr 1fr; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="position: relative;">
+          <img src="{{ url_for('static', filename='img/' ~ current_user.avatar_url) if not current_user.avatar_url.startswith('avatars/') else url_for('uploaded_file', filename=current_user.avatar_url) }}" 
+               alt="{{ current_user.username }}" 
+               style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--accent-primary); object-fit: cover;"
+               onerror="this.src='{{ url_for('static', filename='img/default_avatar.png') }}'">
+        </div>
+        <div>
+          <span class="badge badge-upcoming">{{ current_user.role_name.replace('_', ' ')|upper }}</span>
+          <h1 style="font-size: 1.8rem; font-weight: 800; margin: 4px 0 2px;">{{ current_user.full_name }}</h1>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">@{{ current_user.username }}</p>
+          
+          <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+            {% if profile.ff_uid %}
+              <span class="badge badge-open"><i class="fa-solid fa-gamepad"></i> FF UID: <strong>{{ profile.ff_uid }}</strong></span>
+            {% else %}
+              <span class="badge badge-closing"><i class="fa-solid fa-triangle-exclamation"></i> FF UID NOT SET</span>
+            {% endif %}
+            {% if profile.ff_ign %}
+              <span class="badge badge-upcoming"><i class="fa-solid fa-signature"></i> IGN: <strong>{{ profile.ff_ign }}</strong></span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: right;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">WALLET BALANCE</span>
+        <h2 style="color: var(--accent-gold); font-size: 1.8rem; margin: 2px 0 10px;">₹{{ current_user.get_wallet().total_balance }}</h2>
+        <a href="{{ url_for('payments.my_payments') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-wallet"></i> WALLET</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Left Column: Career Stats & Achievements -->
+    <div>
+      <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-chart-simple text-warning"></i> CAREER STATISTICS</h3>
+        <div class="grid grid-3" style="gap: 12px;">
+          <div class="stat-card" style="padding: 14px;">
+            <div class="value" style="font-size: 1.5rem; color: var(--text-primary);">{{ stats.matches_played }}</div>
+            <div class="label">Matches</div>
+          </div>
+          <div class="stat-card" style="padding: 14px;">
+            <div class="value" style="font-size: 1.5rem; color: var(--accent-success);">{{ stats.wins }}</div>
+            <div class="label">Wins (Booyah)</div>
+          </div>
+          <div class="stat-card" style="padding: 14px;">
+            <div class="value" style="font-size: 1.5rem; color: var(--accent-warning);">{{ stats.total_kills }}</div>
+            <div class="label">Total Kills</div>
+          </div>
+          <div class="stat-card" style="padding: 14px;">
+            <div class="value" style="font-size: 1.5rem; color: var(--accent-purple-light);">{{ stats.total_points }}</div>
+            <div class="label">Total Points</div>
+          </div>
+          <div class="stat-card" style="padding: 14px;">
+            <div class="value" style="font-size: 1.5rem; color: var(--accent-cyan);">⭐ {{ stats.mvp_count }}</div>
+            <div class="label">MVP Awards</div>
+          </div>
+          <div class="stat-card" style="padding: 14px;">
+            <div class="value" style="font-size: 1.5rem; color: var(--text-muted);">#{{ stats.avg_placement }}</div>
+            <div class="label">Avg Place</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements Grid -->
+      <div class="card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;"><i class="fa-solid fa-medal text-warning"></i> ACHIEVEMENTS</h3>
+          <span class="badge badge-open">{{ unlocked_ids|length }} / {{ all_achievements|length }} UNLOCKED</span>
+        </div>
+        <div class="grid grid-2" style="gap: 12px;">
+          {% for ach in all_achievements %}
+            {% set is_unlocked = ach.id in unlocked_ids %}
+            <div class="achievement-card {{ 'unlocked' if is_unlocked else 'locked' }}">
+              <div class="achievement-icon">{{ ach.icon }}</div>
+              <div>
+                <h4 style="font-size: 0.92rem; font-weight: 700; margin-bottom: 2px;">{{ ach.title }}</h4>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">{{ ach.description }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Edit Profile Form -->
+    <div>
+      <div class="card">
+        <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-user-pen text-neon-primary"></i> EDIT PROFILE</h3>
+        <form method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="form-group">
+            <label class="form-label" for="ff_uid">Free Fire UID (Numeric):</label>
+            <input type="text" class="form-control" id="ff_uid" name="ff_uid" value="{{ profile.ff_uid or '' }}" placeholder="e.g. 192847291">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="ff_ign">In-Game Name (IGN):</label>
+            <input type="text" class="form-control" id="ff_ign" name="ff_ign" value="{{ profile.ff_ign or '' }}" placeholder="e.g. ꧁༒DEMON༒꧂">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="country">Country / Region:</label>
+            <input type="text" class="form-control" id="country" name="country" value="{{ profile.country or 'India' }}" placeholder="India">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="bio">Bio / Role Tagline:</label>
+            <textarea class="form-control" id="bio" name="bio" rows="3" placeholder="Rusher / Sniper / IGL...">{{ profile.bio or '' }}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="avatar">Change Avatar Image:</label>
+            <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top: 14px;">
+            <i class="fa-solid fa-floppy-disk"></i> SAVE PROFILE
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

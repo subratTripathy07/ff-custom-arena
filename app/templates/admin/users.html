@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}User Management | Admin Control Center{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-users-gear text-neon-primary"></i> User & RBAC Management</h1>
+      <p class="page-subtitle">Manage registered accounts, roles (Super Admin, Tournament Manager, Moderator, Finance), and ban/unban status.</p>
+    </div>
+    <a href="{{ url_for('admin.download_report', entity='users') }}" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-download"></i> Export Users CSV
+    </a>
+  </div>
+
+  <!-- Search & Role Filter -->
+  <div class="glass-panel p-3 mb-4">
+    <form method="GET" class="row g-2 align-items-center">
+      <div class="col-md-6">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by username, email, full name..." value="{{ search or '' }}">
+      </div>
+      <div class="col-md-4">
+        <select name="role" class="form-select form-select-sm">
+          <option value="">All Roles</option>
+          {% for r in roles %}
+            <option value="{{ r.name }}" {{ 'selected' if role_filter == r.name else '' }}>{{ r.name.replace('_', ' ').title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary btn-sm w-100">Search</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="glass-panel p-4">
+    {% if users.items %}
+      <div class="table-responsive">
+        <table class="table custom-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email / Phone</th>
+              <th>Current Role</th>
+              <th>Status</th>
+              <th>Change Role</th>
+              <th>Account Control</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users.items %}
+              <tr>
+                <td>
+                  <strong>{{ u.full_name }}</strong>
+                  <br><span class="text-neon-primary">@{{ u.username }}</span>
+                </td>
+                <td>
+                  {{ u.email }}
+                  <br><small class="text-muted">{{ u.phone or 'No phone' }}</small>
+                </td>
+                <td>
+                  <span class="role-badge badge-{{ u.role_name }}">{{ u.role_name.replace('_', ' ').title() }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ 'success' if u.is_active_account else 'danger' }} badge-sm">
+                    {{ 'Active' if u.is_active_account else 'Disabled' }}
+                  </span>
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin.change_user_role', user_id=u.id) }}" class="d-flex gap-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <select name="role_id" class="form-select form-select-sm py-0" style="width: 140px;">
+                      {% for r in roles %}
+                        <option value="{{ r.id }}" {{ 'selected' if u.role_id == r.id else '' }}>{{ r.name.replace('_', ' ').title() }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-sm py-0">Update</button>
+                  </form>
+                </td>
+                <td>
+                  {% if u.id != current_user.id %}
+                    <form method="POST" action="{{ url_for('admin.toggle_user_active', user_id=u.id) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-{{ 'danger' if u.is_active_account else 'success' }} btn-sm py-0">
+                        {{ 'Disable' if u.is_active_account else 'Activate' }}
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small">Current User</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if users.pages > 1 %}
+        <div class="pagination-wrapper mt-3 d-flex justify-content-center gap-2">
+          {% if users.has_prev %}
+            <a href="{{ url_for('admin.list_users', page=users.prev_num, search=search, role=role_filter) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+          {% endif %}
+          <span class="btn btn-ghost btn-sm disabled">Page {{ users.page }} of {{ users.pages }}</span>
+          {% if users.has_next %}
+            <a href="{{ url_for('admin.list_users', page=users.next_num, search=search, role=role_filter) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <p class="text-muted text-center py-4">No users match your criteria.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

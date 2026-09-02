@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Admin Login | {{ site_name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="card auth-shell">
+    <h2 style="text-align:center; margin-bottom:6px;">Admin Login</h2>
+    <p style="text-align:center; color:var(--text-muted); margin-bottom:26px; font-size:14px;">Select the administrator account type.</p>
+    <div class="grid grid-2">
+      <a href="{{ url_for('auth.login', portal='admin', admin_level='admin', next=next_page) }}" class="card card-glow-hover" style="text-align:center; text-decoration:none;">
+        <div style="font-size:32px;">&#128100;</div>
+        <h3 style="margin-top:10px;">Normal Admin</h3>
+        <p style="color:var(--text-muted); font-size:13px; margin-top:6px;">For admin staff accounts</p>
+      </a>
+      <a href="{{ url_for('auth.login', portal='admin', admin_level='head', next=next_page) }}" class="card card-glow-hover" style="text-align:center; text-decoration:none;">
+        <div style="font-size:32px;">&#128081;</div>
+        <h3 style="margin-top:10px;">Head Admin</h3>
+        <p style="color:var(--text-muted); font-size:13px; margin-top:6px;">For the super administrator account</p>
+      </a>
+    </div>
+    <p style="text-align:center; margin-top:20px; font-size:14px;"><a href="{{ url_for('auth.login') }}" style="color:var(--accent-secondary);">Back to login options</a></p>
+  </div>
+</div>
+{% endblock %}

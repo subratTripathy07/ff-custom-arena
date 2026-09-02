@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Battle Royale Arenas | {{ site_name }}{% endblock %}
+
+{% block content %}
+<!-- Mobile-First Esports Battle Royale Listing Page (Matching Screenshot 1) -->
+<div class="container" style="padding-top: 20px; padding-bottom: 60px; max-width: 768px; margin: 0 auto;">
+
+  <!-- Header Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; background: #0c071e; padding: 14px 18px; border-radius: 14px; margin-bottom: 16px; border: 1px solid rgba(124,58,237,0.3);">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="/" style="color: #fff; font-size: 1.2rem; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i></a>
+      <h2 style="font-size: 1.35rem; font-weight: 900; margin: 0; color: #ffffff; letter-spacing: 0.5px;">Battle Royale</h2>
+    </div>
+    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-weight: 800; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 6px;">
+      <span style="color: #fbbf24;">⚡</span> {{ current_user.wallet_balance|default(0.0)|float }}
+    </div>
+  </div>
+
+  <!-- Category Tabs (ONGOING, UPCOMING, RESULTS) -->
+  <div style="display: flex; justify-content: space-around; background: #0e0a24; border-bottom: 2px solid rgba(255,255,255,0.1); margin-bottom: 20px; padding: 10px 0;">
+    <a href="{{ url_for('tournaments.list_tournaments', status='live') }}" style="color: {{ '#a78bfa' if status == 'live' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if status == 'live' else 'none' }};">
+      ONGOING
+    </a>
+    <a href="{{ url_for('tournaments.list_tournaments', status='registration_open') }}" style="color: {{ '#a78bfa' if not status or status == 'registration_open' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if not status or status == 'registration_open' else 'none' }};">
+      UPCOMING
+    </a>
+    <a href="{{ url_for('tournaments.list_tournaments', status='completed') }}" style="color: {{ '#a78bfa' if status == 'completed' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if status == 'completed' else 'none' }};">
+      RESULTS
+    </a>
+  </div>
+
+  <!-- Tournaments List -->
+  {% if tournaments.items %}
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      {% for t in tournaments.items %}
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); background: #ffffff; color: #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+          
+          <!-- Banner Graphic -->
+          <div style="position: relative; height: 170px; background-image: linear-gradient(180deg, rgba(0,0,0,0.1), rgba(12,7,30,0.85)), url('{{ url_for('uploaded_file', filename=t.banner_url) if t.banner_url else url_for('static', filename='default_banner.jpg') }}'); background-size: cover; background-position: center;">
+            <div style="position: absolute; bottom: 12px; left: 16px; right: 16px; color: #ffffff; font-weight: 900; font-size: 1.4rem; text-shadow: 0 2px 6px rgba(0,0,0,0.8); text-transform: uppercase; letter-spacing: 0.5px;">
+              FREE FIRE MAX
+              <div style="font-size: 0.85rem; font-weight: 700; color: #e2e8f0; text-transform: uppercase;">{{ t.game_mode or 'BATTLE ROYALE DUO TOURNAMENT' }}</div>
+            </div>
+          </div>
+
+          <!-- Content Body -->
+          <div style="padding: 16px;">
+            <!-- Badges -->
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <span style="background: #ef4444; color: #fff; padding: 3px 12px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">
+                {{ t.game_mode or 'Duo' }}
+              </span>
+              <span style="background: #2dd4bf; color: #0f172a; padding: 3px 12px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">
+                {{ t.map_name or 'Bermuda' }}
+              </span>
+            </div>
+
+            <!-- Title -->
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0 0 14px; display: flex; align-items: center; gap: 8px;">
+              💣 {{ t.name }} - Match #{{ 19390 + t.id }}
+            </h3>
+
+            <!-- 3 Column Info Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 12px 0; margin-bottom: 16px; text-align: center;">
+              <div style="border-right: 1px solid #e2e8f0; padding: 0 4px;">
+                <div style="font-size: 0.85rem; color: #ef4444; font-weight: 700;">{{ t.start_time.strftime('%d/%m/%Y') }}</div>
+                <div style="font-size: 0.85rem; color: #ef4444; font-weight: 700;">{{ t.start_time.strftime('%I:%M %p').lower() }}</div>
+              </div>
+
+              <div style="border-right: 1px solid #e2e8f0; padding: 0 4px;">
+                <div style="font-size: 0.72rem; color: #64748b; font-weight: 800; text-transform: uppercase;">PRIZE POOL <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i></div>
+                <div style="font-size: 1.05rem; color: #0f172a; font-weight: 900;">(₹){{ t.prize_pool|int }}</div>
+              </div>
+
+              <div style="padding: 0 4px;">
+                <div style="font-size: 0.72rem; color: #0ea5e9; font-weight: 800; text-transform: uppercase;">PER KILL</div>
+                <div style="font-size: 1.05rem; color: #0ea5e9; font-weight: 900;">(₹){{ t.per_kill_prize|default(5)|int }}</div>
+              </div>
+            </div>
+
+            <!-- Progress & Join Button Row -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <div style="flex: 1;">
+                <div style="font-size: 0.9rem; font-weight: 800; color: #334155; margin-bottom: 4px;">
+                  {{ t.registered_team_count }}/{{ t.max_teams }}
+                </div>
+                <div style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+                  {% set pct = ((t.registered_team_count / t.max_teams) * 100)|round|int if t.max_teams > 0 else 0 %}
+                  <div style="height: 100%; width: {{ pct }}%; background: #7c3aed;"></div>
+                </div>
+              </div>
+
+              <div>
+                {% if t.slots_left > 0 %}
+                  <a href="{{ url_for('tournaments.detail', slug=t.slug) }}" 
+                     style="display: inline-flex; align-items: center; gap: 8px; background: #000000; color: #ffffff; font-weight: 900; font-size: 0.9rem; padding: 10px 18px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <span style="color: #fbbf24;">⚡</span> {{ t.entry_fee|int }} JOIN MATCH <i class="fa-solid fa-chevron-right"></i>
+                  </a>
+                {% else %}
+                  <a href="{{ url_for('tournaments.detail', slug=t.slug) }}" 
+                     style="display: inline-flex; align-items: center; gap: 8px; background: #000000; color: #ffffff; font-weight: 900; font-size: 0.9rem; padding: 10px 18px; border-radius: 8px; text-decoration: none;">
+                    <span style="color: #fbbf24;">⚡</span> {{ t.entry_fee|int }} MATCH FULL <i class="fa-solid fa-chevron-right"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 40px 20px; background: #0e0a24; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+      <h3 style="color: #fff;">NO MATCHES FOUND</h3>
+      <p style="color: #94a3b8; font-size: 0.9rem;">There are no tournaments in this category right now.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

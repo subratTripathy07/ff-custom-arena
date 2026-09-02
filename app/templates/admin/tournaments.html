@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Tournaments | Admin Control Center{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-trophy text-neon-warning"></i> Tournaments Management</h1>
+      <p class="page-subtitle">Create, configure, schedule matches, and manage tournament lifecycles.</p>
+    </div>
+    <a href="{{ url_for('admin.create_tournament') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> Create New Tournament
+    </a>
+  </div>
+
+  <div class="glass-panel p-4">
+    <div class="table-responsive">
+      <table class="table custom-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Mode / Map</th>
+            <th>Slots</th>
+            <th>Entry Fee</th>
+            <th>Prize Pool</th>
+            <th>Status</th>
+            <th>Start Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tournaments %}
+            <tr>
+              <td>#{{ t.id }}</td>
+              <td><strong>{{ t.name }}</strong></td>
+              <td>{{ t.game_mode or 'BR' }} / {{ t.map_name or 'Bermuda' }}</td>
+              <td>{{ t.registered_team_count }} / {{ t.max_teams }}</td>
+              <td>{{ 'FREE' if t.entry_fee == 0 else '₹' ~ t.entry_fee }}</td>
+              <td class="text-neon-success font-bold">₹{{ t.prize_pool }}</td>
+              <td>
+                <span class="badge badge-{{ 'success' if t.status == 'registration_open' else 'danger' if t.status == 'live' else 'secondary' }} badge-sm">
+                  {{ t.status.replace('_', ' ').title() }}
+                </span>
+              </td>
+              <td class="text-muted">{{ t.start_time.strftime('%d %b %Y, %H:%M') }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{{ url_for('admin.manage_tournament', tournament_id=t.id) }}" class="btn btn-primary btn-sm py-0" title="Manage Matches & Registrations">
+                    <i class="fa-solid fa-sliders"></i>
+                  </a>
+                  <a href="{{ url_for('admin.edit_tournament', tournament_id=t.id) }}" class="btn btn-secondary btn-sm py-0" title="Edit Settings">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </a>
+                  {% if current_user.is_super_admin() %}
+                    <form method="POST" action="{{ url_for('admin.delete_tournament', tournament_id=t.id) }}" onsubmit="return confirm('Permanently delete this tournament? All registrations and matches will be deleted.');" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-danger btn-sm py-0" title="Delete">
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-4 text-muted">No tournaments created yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

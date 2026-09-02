@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Search Results | {{ site_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4">
+    <h1 class="page-title"><i class="fa-solid fa-magnifying-glass text-neon-accent"></i> Search Results</h1>
+    {% if query %}
+      <p class="page-subtitle">Showing results for: <strong class="text-white">"{{ query }}"</strong></p>
+    {% endif %}
+  </div>
+
+  <!-- Search Bar -->
+  <div class="glass-panel p-3 mb-4">
+    <form method="GET" action="{{ url_for('main.search') }}" class="d-flex gap-2">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" name="q" class="form-control" value="{{ query or '' }}" placeholder="Search players, teams, tournaments..." autofocus>
+      </div>
+      <select name="type" class="form-select" style="max-width: 160px;">
+        <option value="" {{ 'selected' if not search_type }}>All</option>
+        <option value="tournament" {{ 'selected' if search_type == 'tournament' }}>Tournaments</option>
+        <option value="team" {{ 'selected' if search_type == 'team' }}>Teams</option>
+        <option value="player" {{ 'selected' if search_type == 'player' }}>Players</option>
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm">Search</button>
+    </form>
+  </div>
+
+  {% if query %}
+    <!-- Tournaments Results -->
+    {% if not search_type or search_type == 'tournament' %}
+      {% if tournaments %}
+        <div class="glass-panel p-4 mb-4">
+          <h3 class="section-title mb-3">
+            <i class="fa-solid fa-trophy text-neon-warning"></i> Tournaments
+            <span class="badge badge-secondary ms-2">{{ tournaments|length }}</span>
+          </h3>
+          <div class="grid grid-3">
+            {% for t in tournaments %}
+              <a href="{{ url_for('tournaments.detail', slug=t.slug) }}" class="card t-card card-glow-hover p-3">
+                <span class="badge badge-{{ 'success' if t.status == 'registration_open' else 'danger' if t.status == 'live' else 'secondary' }} badge-sm mb-2">{{ t.status.replace('_',' ').title() }}</span>
+                <h4 class="t-title mb-1">{{ t.name }}</h4>
+                <small class="text-muted">{{ t.game_mode or 'BR' }} · {{ t.map_name or 'Bermuda' }}</small>
+                <div class="text-neon-success mt-1">₹{{ t.prize_pool }}</div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% elif not search_type %}
+        {# Skip if no results and showing all categories #}
+      {% else %}
+        <div class="glass-panel p-4 text-center text-muted">No tournaments found.</div>
+      {% endif %}
+    {% endif %}
+
+    <!-- Teams Results -->
+    {% if not search_type or search_type == 'team' %}
+      {% if teams %}
+        <div class="glass-panel p-4 mb-4">
+          <h3 class="section-title mb-3">
+            <i class="fa-solid fa-users text-neon-accent"></i> Teams
+            <span class="badge badge-secondary ms-2">{{ teams|length }}</span>
+          </h3>
+          <div class="grid grid-3">
+            {% for team in teams %}
+              <a href="{{ url_for('teams.team_detail', team_id=team.id) }}" class="card t-card card-glow-hover p-3 d-flex align-items-center gap-3">
+                {% if team.logo_url %}
+                  <img src="{{ url_for('uploaded_file', filename=team.logo_url) }}" class="avatar-sm" alt="{{ team.name }}"
+                       onerror="this.src='{{ url_for('static', filename='img/default_team.png') }}'">
+                {% else %}
+                  <div class="avatar-sm bg-dark d-flex align-items-center justify-content-center rounded">
+                    <i class="fa-solid fa-users text-muted"></i>
+                  </div>
+                {% endif %}
+                <div>
+                  <h4 class="mb-0">{{ team.name }}</h4>
+                  <small class="text-muted">{{ team.tag or '' }} · {{ team.members.count() }} members</small>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <!-- Players Results -->
+    {% if not search_type or search_type == 'player' %}
+      {% if players %}
+        <div class="glass-panel p-4 mb-4">
+          <h3 class="section-title mb-3">
+            <i class="fa-solid fa-person-rifle text-neon-primary"></i> Players
+            <span class="badge badge-secondary ms-2">{{ players|length }}</span>
+          </h3>
+          <div class="grid grid-4">
+            {% for player in players %}
+              <a href="{{ url_for('player.public_profile', username=player.username) }}" class="card t-card card-glow-hover p-3 text-center">
+                <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar-md mx-auto mb-2" alt="{{ player.username }}">
+                <strong>{{ player.full_name }}</strong>
+                <small class="text-muted d-block">@{{ player.username }}</small>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    {% if not tournaments and not teams and not players %}
+      <div class="glass-panel p-5 text-center">
+        <i class="fa-solid fa-binoculars fa-3x text-muted mb-3 d-block"></i>
+        <h3>No Results Found</h3>
+        <p class="text-muted">No matches found for "{{ query }}". Try a different keyword.</p>
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="glass-panel p-5 text-center">
+      <i class="fa-solid fa-magnifying-glass fa-3x text-muted mb-3 d-block"></i>
+      <h3>Start Searching</h3>
+      <p class="text-muted">Type a tournament name, team name, or player username to find what you're looking for.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

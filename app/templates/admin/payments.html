@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Payments Verification Queue | Admin Control Center{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div style="font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding: 0 10px;">
+      <i class="fa-solid fa-shield-halved text-warning"></i> ADMIN MENU
+    </div>
+    <div class="admin-sidebar-nav">
+      <a href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge"></i> OVERVIEW</a>
+      <a href="{{ url_for('admin.create_tournament') }}"><i class="fa-solid fa-plus"></i> NEW TOURNAMENT</a>
+      <a href="{{ url_for('admin.list_tournaments') }}"><i class="fa-solid fa-trophy"></i> TOURNAMENTS</a>
+      <a href="{{ url_for('admin.list_payments', status='verification_required') }}" class="active"><i class="fa-solid fa-wallet"></i> PAYMENTS</a>
+      <a href="{{ url_for('admin.list_results', status='under_review') }}"><i class="fa-solid fa-check-to-slot"></i> VERIFY SCORES</a>
+      <a href="{{ url_for('admin.list_disputes', status='open') }}"><i class="fa-solid fa-triangle-exclamation"></i> DISPUTES</a>
+      <a href="{{ url_for('admin.list_support', status='open') }}"><i class="fa-solid fa-headset"></i> TICKETS</a>
+      <a href="{{ url_for('admin.reports_hub') }}"><i class="fa-solid fa-chart-line"></i> REPORTS & CSV</a>
+      
+      <form method="POST" action="{{ url_for('auth.logout') }}" style="margin-top: 14px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger btn-block" style="font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> LOGOUT (@{{ current_user.username }})
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <h1 style="font-size: 2.2rem; font-weight: 800;"><i class="fa-solid fa-credit-card text-neon-success"></i> PAYMENTS VERIFICATION QUEUE</h1>
+        <p class="section-sub">Audit transaction UTR numbers and payment screenshot proofs to confirm slots.</p>
+      </div>
+      <a href="{{ url_for('admin.download_report', entity='payments') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-download"></i> EXPORT PAYMENTS CSV
+      </a>
+    </div>
+
+    <!-- Admin QR Code & Payment Gateway Manager -->
+    <div class="card" style="margin-bottom: 24px; padding: 22px; border: 1px solid var(--accent-cyan); background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(124, 58, 237, 0.08));">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="margin: 0; font-size: 1.25rem; color: var(--accent-cyan); display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-qrcode"></i> ADMIN UPI QR CODE & PAYMENT GATEWAY SETTINGS
+        </h3>
+        <span class="badge badge-open"><i class="fa-solid fa-bolt text-neon-success"></i> LIVE GATEWAY ACTIVE</span>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.update_qr_settings') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="grid grid-3" style="gap: 20px; align-items: center;">
+          <!-- QR Code Preview & Upload -->
+          <div style="text-align: center; background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Active Payment QR Code:</p>
+            {% if admin_qr_code %}
+              <img src="{{ url_for('uploaded_file', filename=admin_qr_code) }}" alt="Admin Payment QR Code" style="max-width: 140px; max-height: 140px; border-radius: 8px; border: 2px solid var(--accent-cyan); background: white; padding: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.4);" onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ admin_upi_id }}';">
+            {% else %}
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ admin_upi_id }}" alt="Default QR Code" style="max-width: 140px; max-height: 140px; border-radius: 8px; border: 2px solid var(--accent-cyan); background: white; padding: 6px;">
+            {% endif %}
+            <div style="margin-top: 10px;">
+              <label class="btn btn-secondary btn-sm" style="cursor: pointer; width: 100%;">
+                <i class="fa-solid fa-upload"></i> Upload New QR Code
+                <input type="file" name="qr_code" accept="image/*" style="display: none;" onchange="this.form.submit()">
+              </label>
+            </div>
+          </div>
+
+          <!-- UPI ID & Merchant Name Fields -->
+          <div>
+            <div class="form-group">
+              <label class="form-label"><i class="fa-solid fa-at text-neon-success"></i> Admin UPI ID (VPA):</label>
+              <input type="text" name="upi_id" class="form-control mono" value="{{ admin_upi_id }}" placeholder="e.g. subrat@upi" required>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Players will see and copy this UPI ID to pay entry fees.</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label"><i class="fa-solid fa-building-columns text-neon-warning"></i> Merchant / Receiver Name:</label>
+              <input type="text" name="upi_name" class="form-control" value="{{ admin_upi_name }}" placeholder="e.g. FF Arena Official" required>
+            </div>
+          </div>
+
+          <!-- Action & Info -->
+          <div style="display: flex; flex-direction: column; justify-content: center; gap: 10px;">
+            <div style="padding: 12px; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--text-secondary);">
+              <i class="fa-solid fa-circle-check text-neon-success"></i> <strong>Automated Verification:</strong> Players submit UTR. System automatically analyzes transactions and marks <strong>PAYMENT DONE</strong>.
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-floppy-disk"></i> SAVE PAYMENT SETTINGS
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Player Wallet Deposit Requests Section (YES / NO APPROVALS) -->
+    <div class="card" style="margin-bottom: 28px; border: 1px solid var(--accent-warning); background: rgba(245,158,11,0.03); padding: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-warning); margin: 0; display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-wallet"></i> PLAYER WALLET DEPOSIT REQUESTS (TOKEN APPROVALS)
+        </h2>
+        <span class="badge badge-warning">1 ₹ = 1 TOKEN ⚡</span>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        Review payment screenshots and UTR numbers submitted by players. Click <strong>YES (APPROVE)</strong> to credit Tokens to player profile payment box, or <strong>NO (REJECT)</strong> to decline.
+      </p>
+
+      <div style="overflow-x: auto;">
+        {% if wallet_deposits %}
+          <table class="leaderboard-table">
+            <thead>
+              <tr style="background: rgba(0,0,0,0.4);">
+                <th>DEP ID</th>
+                <th>PLAYER</th>
+                <th>AMOUNT / TOKENS</th>
+                <th>TRANSACTION UTR</th>
+                <th>PAYMENT SCREENSHOT (PIC)</th>
+                <th>STATUS</th>
+                <th>ACTION (YES / NO)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for dep in wallet_deposits %}
+                <tr>
+                  <td>#{{ dep.id }}</td>
+                  <td>
+                    <strong style="color: #ffffff;">@{{ dep.wallet.user.username if dep.wallet and dep.wallet.user else 'User' }}</strong>
+                    <br><small style="color: var(--text-muted);">{{ dep.wallet.user.full_name if dep.wallet and dep.wallet.user else '' }}</small>
+                  </td>
+                  <td>
+                    <strong style="color: var(--accent-gold); font-size: 1.15rem;">⚡ {{ dep.amount }} Tokens</strong>
+                    <br><small style="color: var(--text-muted);">(₹{{ dep.amount }})</small>
+                  </td>
+                  <td>
+                    <strong class="mono" style="color: var(--accent-cyan);">{{ dep.reference_id or 'N/A' }}</strong>
+                    <br><small style="color: var(--text-muted);">{{ dep.payment_method or 'UPI' }}</small>
+                  </td>
+                  <td>
+                    {% if dep.proof_path %}
+                      <a href="{{ url_for('uploaded_file', filename=dep.proof_path) }}" target="_blank" title="Click to view full screenshot">
+                        <img src="{{ url_for('uploaded_file', filename=dep.proof_path) }}" alt="Screenshot Proof" 
+                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 2px solid var(--accent-cyan); background: #000;">
+                      </a>
+                    {% else %}
+                      <span style="color: var(--text-muted); font-size: 0.78rem;">No Pic Uploaded</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge badge-{{ 'open' if dep.status == 'SUCCESS' else 'warning' if dep.status == 'pending' else 'closing' }}">
+                      {{ dep.status|upper }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if dep.status == 'pending' %}
+                      <form method="POST" action="{{ url_for('admin.review_deposit', deposit_id=dep.id) }}" style="display: flex; gap: 6px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" name="decision" value="yes" class="btn btn-success btn-sm" style="font-weight: 900; font-size: 0.82rem; padding: 6px 12px;">
+                          <i class="fa-solid fa-check"></i> YES (APPROVE)
+                        </button>
+                        <button type="submit" name="decision" value="no" class="btn btn-danger btn-sm" style="font-weight: 900; font-size: 0.82rem; padding: 6px 12px;">
+                          <i class="fa-solid fa-xmark"></i> NO (REJECT)
+                        </button>
+                      </form>
+                    {% else %}
+                      <span style="color: var(--text-muted); font-size: 0.78rem;">
+                        {{ dep.updated_at.strftime('%d %b %H:%M') if dep.updated_at else 'Processed' }}
+                      </span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.88rem;">
+            No deposit requests pending at the moment.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls -->
+    <div class="card" style="margin-bottom: 24px; padding: 18px;">
+      <form method="GET">
+        <div class="grid grid-3" style="gap: 12px; align-items: center;">
+          <input type="text" name="search" class="form-control" placeholder="Search by UTR, Reg Code, Tournament..." value="{{ search or '' }}">
+          <select name="status" class="form-control">
+            <option value="">All Payment Statuses</option>
+            <option value="verification_required" {{ 'selected' if status == 'verification_required' else '' }}>Pending Verification (In Review)</option>
+            <option value="verified" {{ 'selected' if status == 'verified' else '' }}>Verified / Approved</option>
+            <option value="rejected" {{ 'selected' if status == 'rejected' else '' }}>Rejected</option>
+            <option value="pending" {{ 'selected' if status == 'pending' else '' }}>Pending Proof</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter"></i> FILTER</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" style="padding: 0; overflow-x: auto;">
+      {% if payments.items %}
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>TOURNAMENT & TEAM</th>
+              <th>AMOUNT</th>
+              <th>UTR / METHOD</th>
+              <th>PROOF</th>
+              <th>STATUS</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payments.items %}
+              <tr>
+                <td>#{{ p.id }}</td>
+                <td>
+                  <strong>{{ p.registration.tournament.name }}</strong>
+                  <br><span style="font-size: 0.78rem; color: var(--accent-purple-light);">{{ p.registration.team.name }}</span> (<code class="mono">{{ p.registration.registration_code }}</code>)
+                </td>
+                <td><strong style="color: var(--accent-success); font-size: 1.1rem;">₹{{ p.amount }}</strong></td>
+                <td>
+                  <strong class="mono">{{ p.transaction_id or 'N/A' }}</strong>
+                  <br><small style="color: var(--text-muted);">{{ p.payment_method or 'UPI' }}</small>
+                </td>
+                <td>
+                  {% if p.proof_path %}
+                    <a href="{{ url_for('uploaded_file', filename=p.proof_path) }}" target="_blank" class="btn btn-secondary btn-sm">
+                      <i class="fa-solid fa-image"></i> PROOF
+                    </a>
+                  {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.78rem;">No File</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-{{ 'open' if p.status == 'verified' else 'upcoming' if p.status == 'verification_required' else 'closing' }}">
+                    {{ p.status.replace('_', ' ')|upper }}
+                  </span>
+                </td>
+                <td>
+                  {% if p.status in ['verification_required', 'pending'] %}
+                    <form method="POST" action="{{ url_for('admin.review_payment', payment_id=p.id) }}" style="display: flex; gap: 6px;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" name="decision" value="verified" class="btn btn-success btn-sm">
+                        <i class="fa-solid fa-check"></i> APPROVE
+                      </button>
+                      <button type="submit" name="decision" value="rejected" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-xmark"></i> REJECT
+                      </button>
+                    </form>
+                  {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.78rem;">{{ p.verified_at.strftime('%d %b %H:%M') if p.verified_at else 'Reviewed' }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {% if payments.pages > 1 %}
+          <div style="display: flex; justify-content: center; gap: 10px; padding: 20px;">
+            {% if payments.has_prev %}
+              <a href="{{ url_for('admin.list_payments', page=payments.prev_num, status=status, search=search) }}" class="btn btn-secondary btn-sm">&laquo; PREV</a>
+            {% endif %}
+            <span class="btn btn-ghost btn-sm">Page {{ payments.page }} of {{ payments.pages }}</span>
+            {% if payments.has_next %}
+              <a href="{{ url_for('admin.list_payments', page=payments.next_num, status=status, search=search) }}" class="btn btn-secondary btn-sm">NEXT &raquo;</a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      {% else %}
+        <div class="empty-state">
+          <i class="fa-solid fa-credit-card" style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 8px;"></i>
+          <h3>NO PAYMENTS IN QUEUE</h3>
+          <p>All payment proofs have been audited or no records match your filter.</p>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

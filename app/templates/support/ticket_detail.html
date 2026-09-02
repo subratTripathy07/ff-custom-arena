@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket #{{ ticket.id }}: {{ ticket.subject }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a href="{{ url_for('support.tickets') if not current_user.is_admin() else url_for('admin.list_support') }}" class="btn btn-secondary btn-sm mb-2">
+        <i class="fa-solid fa-arrow-left"></i> Back to Support
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge badge-secondary">{{ ticket.category.title() }}</span>
+        <span class="badge badge-{{ 'warning' if ticket.status == 'open' else 'info' if ticket.status == 'in_progress' else 'success' if ticket.status == 'resolved' else 'secondary' }}">
+          {{ ticket.status.replace('_', ' ').title() }}
+        </span>
+      </div>
+      <h1 class="page-title mt-1 mb-0">#{{ ticket.id }} — {{ ticket.subject }}</h1>
+      <small class="text-muted">Opened by @{{ ticket.user.username }} on {{ ticket.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+    </div>
+
+    {% if current_user.is_admin() %}
+      <div class="admin-ticket-status-box">
+        <form method="POST" action="{{ url_for('support.ticket_status', ticket_id=ticket.id) }}" class="d-flex gap-1">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="status" class="form-select form-select-sm">
+            <option value="open" {{ 'selected' if ticket.status == 'open' else '' }}>Open</option>
+            <option value="in_progress" {{ 'selected' if ticket.status == 'in_progress' else '' }}>In Progress</option>
+            <option value="waiting_for_user" {{ 'selected' if ticket.status == 'waiting_for_user' else '' }}>Waiting for User</option>
+            <option value="resolved" {{ 'selected' if ticket.status == 'resolved' else '' }}>Resolved</option>
+            <option value="closed" {{ 'selected' if ticket.status == 'closed' else '' }}>Closed</option>
+          </select>
+          <button type="submit" class="btn btn-warning btn-sm">Update</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <!-- Conversation Thread -->
+      <div class="glass-panel p-4 mb-4">
+        <!-- Original Ticket Message -->
+        <div class="chat-bubble chat-user mb-4 p-3 bg-dark rounded border border-secondary">
+          <div class="d-flex justify-content-between mb-2">
+            <strong>@{{ ticket.user.username }} (Original Inquiry)</strong>
+            <small class="text-muted">{{ ticket.created_at.strftime('%d %b, %I:%M %p') }}</small>
+          </div>
+          <p class="mb-0 leading-relaxed">{{ ticket.message }}</p>
+        </div>
+
+        <!-- Replies List -->
+        {% for msg in ticket.replies %}
+          {% set is_admin_msg = msg.sender_id != ticket.user_id %}
+          <div class="chat-bubble {{ 'chat-admin' if is_admin_msg else 'chat-user' }} mb-3 p-3 rounded {{ 'bg-primary-dark border border-primary' if is_admin_msg else 'bg-dark border border-secondary' }}">
+            <div class="d-flex justify-content-between mb-2">
+              <strong>
+                {% if is_admin_msg %}
+                  <span class="text-neon-warning"><i class="fa-solid fa-headset"></i> Support Moderator</span>
+                {% else %}
+                  <span>@{{ ticket.user.username }}</span>
+                {% endif %}
+              </strong>
+              <small class="text-muted">{{ msg.created_at.strftime('%d %b, %I:%M %p') if msg.created_at else '' }}</small>
+            </div>
+            <p class="mb-0 leading-relaxed">{{ msg.message }}</p>
+          </div>
+        {% endfor %}
+
+        <!-- Reply Input Form -->
+        {% if ticket.status not in ['closed'] %}
+          <div class="reply-box mt-4 pt-3 border-top border-dark">
+            <h4 class="fs-5 mb-2"><i class="fa-solid fa-reply text-neon-primary"></i> Post Reply</h4>
+            <form method="POST">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="mb-3">
+                <textarea name="message" class="form-control form-control-sm" rows="3" placeholder="Type your reply here..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-paper-plane"></i> Send Reply
+              </button>
+            </form>
+          </div>
+        {% else %}
+          <div class="alert alert-secondary mt-3 text-center">
+            This ticket is closed. Please open a new ticket if you have further inquiries.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Ticket Summary Card -->
+    <div class="col-lg-4">
+      <div class="glass-panel p-4">
+        <h4 class="section-title fs-5 mb-3"><i class="fa-solid fa-circle-info text-neon-info"></i> Ticket Metadata</h4>
+        <ul class="list-unstyled mb-0">
+          <li class="d-flex justify-content-between py-2 border-bottom border-dark">
+            <span class="text-muted">Ticket ID:</span>
+            <strong>#{{ ticket.id }}</strong>
+          </li>
+          <li class="d-flex justify-content-between py-2 border-bottom border-dark">
+            <span class="text-muted">Category:</span>
+            <strong>{{ ticket.category.title() }}</strong>
+          </li>
+          <li class="d-flex justify-content-between py-2 border-bottom border-dark">
+            <span class="text-muted">Created By:</span>
+            <strong>@{{ ticket.user.username }}</strong>
+          </li>
+          <li class="d-flex justify-content-between py-2">
+            <span class="text-muted">Status:</span>
+            <strong>{{ ticket.status.replace('_', ' ').title() }}</strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

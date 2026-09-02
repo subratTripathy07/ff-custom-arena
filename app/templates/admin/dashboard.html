@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Center | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+  <!-- Sidebar Navigation -->
+  <aside class="admin-sidebar">
+    <div style="font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding: 0 10px;">
+      <i class="fa-solid fa-shield-halved text-warning"></i> ADMIN MENU
+    </div>
+    <div class="admin-sidebar-nav">
+      <a href="{{ url_for('admin.dashboard') }}" class="active"><i class="fa-solid fa-gauge"></i> OVERVIEW</a>
+      <a href="{{ url_for('admin.create_tournament') }}"><i class="fa-solid fa-plus"></i> NEW TOURNAMENT</a>
+      <a href="{{ url_for('admin.list_tournaments') }}"><i class="fa-solid fa-trophy"></i> TOURNAMENTS</a>
+      <a href="{{ url_for('admin.list_payments', status='verification_required') }}"><i class="fa-solid fa-wallet"></i> PAYMENTS ({{ stats.pending_payments }})</a>
+      <a href="{{ url_for('admin.list_results', status='under_review') }}"><i class="fa-solid fa-check-to-slot"></i> VERIFY SCORES ({{ stats.pending_results }})</a>
+      <a href="{{ url_for('admin.list_disputes', status='open') }}"><i class="fa-solid fa-triangle-exclamation"></i> DISPUTES ({{ stats.open_disputes }})</a>
+      <a href="{{ url_for('admin.list_support', status='open') }}"><i class="fa-solid fa-headset"></i> TICKETS ({{ stats.open_tickets }})</a>
+      <a href="{{ url_for('admin.list_announcements') }}"><i class="fa-solid fa-bullhorn"></i> ANNOUNCEMENTS</a>
+      <a href="{{ url_for('admin.list_users') }}"><i class="fa-solid fa-user-gear"></i> USERS & ROLES</a>
+      <a href="{{ url_for('admin.reports_hub') }}"><i class="fa-solid fa-chart-line"></i> REPORTS & CSV</a>
+      <a href="{{ url_for('admin.list_audit_logs') }}"><i class="fa-solid fa-list-check"></i> AUDIT LOGS</a>
+      
+      <form method="POST" action="{{ url_for('auth.logout') }}" style="margin-top: 14px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger btn-block" style="font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> LOGOUT (@{{ current_user.username }})
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Admin Main Content -->
+  <main class="admin-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <h1 style="font-size: 2.2rem; font-weight: 800;"><i class="fa-solid fa-shield-halved text-warning"></i> OPERATIONAL CONTROL CENTER</h1>
+        <p class="section-sub">Manage custom tournaments, verify payment proofs, approve scores, and issue payouts.</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="{{ url_for('admin.create_tournament') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus"></i> CREATE TOURNAMENT
+        </a>
+        <a href="{{ url_for('admin.reports_hub') }}" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-file-export"></i> REPORTS
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats Metric Cards -->
+    <div class="grid grid-4" style="margin-bottom: 24px;">
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-purple-light);">{{ stats.total_players }}</div>
+        <div class="label"><i class="fa-solid fa-users"></i> Total Players</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-cyan);">{{ stats.total_teams }}</div>
+        <div class="label"><i class="fa-solid fa-shield-halved"></i> Total Squads</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-gold);">{{ stats.total_tournaments }}</div>
+        <div class="label"><i class="fa-solid fa-trophy"></i> Tournaments</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-success);">₹{{ stats.total_revenue }}</div>
+        <div class="label"><i class="fa-solid fa-wallet"></i> Verified Revenue</div>
+      </div>
+    </div>
+
+    <!-- Action Queue Quick Strip -->
+    <div class="card" style="margin-bottom: 24px; padding: 18px;">
+      <h3 style="font-size: 1rem; margin-bottom: 12px;"><i class="fa-solid fa-bell-concierge text-warning"></i> PENDING ACTION QUEUES</h3>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.list_payments', status='verification_required') }}" class="btn btn-warning btn-sm">
+          <i class="fa-solid fa-credit-card"></i> Payments Verification ({{ stats.pending_payments }})
+        </a>
+        <a href="{{ url_for('admin.list_results', status='under_review') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-check-to-slot"></i> Match Score Reviews ({{ stats.pending_results }})
+        </a>
+        <a href="{{ url_for('admin.list_disputes', status='open') }}" class="btn btn-danger btn-sm">
+          <i class="fa-solid fa-triangle-exclamation"></i> Open Disputes ({{ stats.open_disputes }})
+        </a>
+        <a href="{{ url_for('admin.list_support', status='open') }}" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-headset"></i> Support Tickets ({{ stats.open_tickets }})
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Tournaments & Registrations Grid -->
+    <div class="grid grid-2" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="margin: 0;"><i class="fa-solid fa-trophy text-warning"></i> RECENT TOURNAMENTS</h3>
+          <a href="{{ url_for('admin.list_tournaments') }}" class="btn btn-ghost btn-sm">VIEW ALL</a>
+        </div>
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>NAME</th>
+              <th>STATUS</th>
+              <th>SLOTS</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in recent_tournaments %}
+              <tr>
+                <td><strong>{{ t.name }}</strong></td>
+                <td>
+                  <span class="badge badge-{{ 'open' if t.status == 'registration_open' else 'live' if t.status == 'live' else 'completed' }}">
+                    {{ t.status.replace('_', ' ')|upper }}
+                  </span>
+                </td>
+                <td>{{ t.registered_team_count }} / {{ t.max_teams }}</td>
+                <td>
+                  <a href="{{ url_for('admin.manage_tournament', tournament_id=t.id) }}" class="btn btn-secondary btn-sm">MANAGE</a>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">No tournaments created yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="margin: 0;"><i class="fa-solid fa-ticket text-neon-primary"></i> RECENT REGISTRATIONS</h3>
+          <a href="{{ url_for('admin.reports_hub') }}" class="btn btn-ghost btn-sm">EXPORT</a>
+        </div>
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>REG CODE</th>
+              <th>TEAM</th>
+              <th>STATUS</th>
+              <th>DATE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in recent_registrations %}
+              <tr>
+                <td><code class="mono">{{ r.registration_code }}</code></td>
+                <td><strong>{{ r.team.name }}</strong></td>
+                <td>
+                  <span class="badge badge-{{ 'open' if r.status == 'confirmed' else 'upcoming' if r.status == 'pending' else 'closing' }}">
+                    {{ r.status|upper }}
+                  </span>
+                </td>
+                <td style="font-size: 0.78rem; color: var(--text-muted);">{{ r.created_at.strftime('%d %b %H:%M') }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">No registrations yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

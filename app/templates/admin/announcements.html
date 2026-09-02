@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Announcements Management | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="page-header mb-4">
+    <h1 class="page-title"><i class="fa-solid fa-bullhorn text-neon-primary"></i> Platform Announcements</h1>
+    <p class="page-subtitle">Broadcast critical updates, tournament notifications, and server news to all players.</p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="glass-panel p-4">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-plus text-neon-success"></i> Post Announcement</h3>
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label small">Headline / Title:</label>
+            <input type="text" name="title" class="form-control form-control-sm" placeholder="e.g. Free Fire Bermuda Championship Registrations Open!" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Priority Level:</label>
+            <select name="priority" class="form-select form-select-sm">
+              <option value="normal">Normal Priority</option>
+              <option value="high">🔥 High / Urgent Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Announcement Message:</label>
+            <textarea name="message" class="form-control form-control-sm" rows="4" placeholder="Type announcement content here..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="fa-solid fa-paper-plane"></i> Publish Live
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="glass-panel p-4">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-list text-neon-info"></i> Active & Past Announcements</h3>
+        {% if announcements %}
+          <div class="announcements-admin-list">
+            {% for a in announcements %}
+              <div class="glass-panel p-3 mb-3 border-{{ 'warning' if a.priority == 'high' else 'secondary' }}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <span class="badge badge-{{ 'warning' if a.priority == 'high' else 'secondary' }} badge-sm">{{ a.priority.upper() }}</span>
+                    <span class="badge badge-{{ 'success' if a.is_active else 'secondary' }} badge-sm">{{ 'Active' if a.is_active else 'Disabled' }}</span>
+                  </div>
+                  <div class="d-flex gap-1">
+                    <form method="POST" action="{{ url_for('admin.toggle_announcement', announcement_id=a.id) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-secondary btn-sm py-0">{{ 'Disable' if a.is_active else 'Enable' }}</button>
+                    </form>
+                    {% if current_user.is_super_admin() %}
+                      <form method="POST" action="{{ url_for('admin.delete_announcement', announcement_id=a.id) }}" onsubmit="return confirm('Delete announcement?');" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger btn-sm py-0"><i class="fa-solid fa-trash"></i></button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </div>
+                <h4 class="mb-1">{{ a.title }}</h4>
+                <p class="text-secondary small mb-2">{{ a.message }}</p>
+                <small class="text-muted"><i class="fa-regular fa-clock"></i> Posted on {{ a.created_at.strftime('%d %b %Y at %I:%M %p') }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted text-center py-4">No announcements published yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

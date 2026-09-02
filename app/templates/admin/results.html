@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Results Verification Queue | Admin Control Center{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-check-to-slot text-neon-primary"></i> Match Results Review Queue</h1>
+      <p class="page-subtitle">Verify match placements, kills, and scoreboard screenshot proofs to award points & achievements.</p>
+    </div>
+    <a href="{{ url_for('admin.download_report', entity='results') }}" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-download"></i> Export Results CSV
+    </a>
+  </div>
+
+  <div class="glass-panel p-4">
+    {% if results.items %}
+      <div class="table-responsive">
+        <table class="table custom-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Match / Tournament</th>
+              <th>Team</th>
+              <th>Placement</th>
+              <th>Kills</th>
+              <th>Points Total</th>
+              <th>Scoreboard Proof</th>
+              <th>Status</th>
+              <th>Review / Verify</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in results.items %}
+              <tr>
+                <td>#{{ r.id }}</td>
+                <td>
+                  <strong>{{ r.match.tournament.name }}</strong>
+                  <br><small class="text-muted">Round {{ r.match.round_number }} · Match #{{ r.match.match_number }}</small>
+                </td>
+                <td><strong class="text-neon-primary">{{ r.team.name }}</strong></td>
+                <td><span class="badge {{ 'badge-success' if r.placement == 1 else 'badge-primary' }}">#{{ r.placement }}</span></td>
+                <td><i class="fa-solid fa-skull"></i> {{ r.kills }}</td>
+                <td><strong class="text-neon-warning">{{ r.total_points }} pts</strong></td>
+                <td>
+                  {% if r.proof_url %}
+                    <a href="{{ url_for('uploaded_file', filename=r.proof_url) }}" target="_blank" class="btn btn-secondary btn-sm py-0">
+                      <i class="fa-solid fa-image"></i> View Scoreboard
+                    </a>
+                  {% else %}
+                    <span class="text-muted small">No Proof</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-{{ 'success' if r.status == 'verified' else 'warning' if r.status == 'under_review' else 'danger' if r.status == 'rejected' else 'secondary' }} badge-sm">
+                    {{ r.status.replace('_', ' ').title() }}
+                  </span>
+                </td>
+                <td>
+                  {% if r.status in ['under_review', 'pending'] %}
+                    <form method="POST" action="{{ url_for('admin.review_result', result_id=r.id) }}" class="d-flex gap-1 flex-wrap">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" name="decision" value="verified" class="btn btn-success btn-sm py-0">
+                        <i class="fa-solid fa-check"></i> Verify
+                      </button>
+                      <button type="submit" name="decision" value="rejected" class="btn btn-danger btn-sm py-0">
+                        <i class="fa-solid fa-xmark"></i> Reject
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small">Verified</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if results.pages > 1 %}
+        <div class="pagination-wrapper mt-3 d-flex justify-content-center gap-2">
+          {% if results.has_prev %}
+            <a href="{{ url_for('admin.list_results', page=results.prev_num, status=status) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+          {% endif %}
+          <span class="btn btn-ghost btn-sm disabled">Page {{ results.page }} of {{ results.pages }}</span>
+          {% if results.has_next %}
+            <a href="{{ url_for('admin.list_results', page=results.next_num, status=status) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state py-5 text-center">
+        <i class="fa-solid fa-trophy fa-3x text-muted mb-3"></i>
+        <h3>No Results to Review</h3>
+        <p class="text-muted">All match results have been verified or none submitted yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

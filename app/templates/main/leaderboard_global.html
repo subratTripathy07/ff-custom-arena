@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Global Hall of Fame | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 60px;">
+  
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="font-weight: 900;"><i class="fa-solid fa-ranking-star text-warning"></i> GLOBAL HALL OF FAME</h1>
+    <p class="section-sub">Real-time leaderboard updated automatically after verified match scores.</p>
+  </div>
+
+  <ul class="custom-tabs">
+    <li><button class="nav-link active" onclick="switchLeaderboardTab('players')"><i class="fa-solid fa-user-ninja"></i> TOP PLAYERS</button></li>
+    <li><button class="nav-link" onclick="switchLeaderboardTab('teams')"><i class="fa-solid fa-users"></i> TOP SQUADS</button></li>
+  </ul>
+
+  <!-- Players Leaderboard Tab -->
+  <div id="tab-players" class="tab-pane active">
+    <!-- Desktop Table View -->
+    <div class="card d-none-mobile" style="padding: 0; overflow-x: auto;">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>RANK</th>
+            <th>PLAYER</th>
+            <th>MATCHES</th>
+            <th>WINS (BOOYAH)</th>
+            <th>KILLS</th>
+            <th>MVPS</th>
+            <th>POINTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in players %}
+            <tr class="{{ 'rank-top-1' if p.rank == 1 else 'rank-top-2' if p.rank == 2 else 'rank-top-3' if p.rank == 3 else '' }}">
+              <td>
+                {% if p.rank == 1 %}
+                  <span class="medal-badge medal-gold">🥇 1</span>
+                {% elif p.rank == 2 %}
+                  <span class="medal-badge medal-silver">🥈 2</span>
+                {% elif p.rank == 3 %}
+                  <span class="medal-badge medal-bronze">🥉 3</span>
+                {% else %}
+                  #{{ p.rank }}
+                {% endif %}
+              </td>
+              <td style="font-weight: 700;">
+                <a href="{{ url_for('player.public_profile', username=p.user.username) }}">
+                  {{ p.user.full_name }} <span style="font-size: 0.78rem; color: var(--text-muted);">(@{{ p.user.username }})</span>
+                </a>
+              </td>
+              <td>{{ p.matches_played }}</td>
+              <td class="text-neon-success" style="font-weight: 700;">{{ p.wins }}</td>
+              <td class="text-neon-warning" style="font-weight: 700;"><i class="fa-solid fa-skull"></i> {{ p.total_kills }}</td>
+              <td>⭐ {{ p.mvp_count }}</td>
+              <td><strong style="color: var(--accent-purple-light); font-size: 1.1rem;">{{ p.total_points }} pts</strong></td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No player scores recorded yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Rank Cards View -->
+    <div class="grid grid-1 d-md-none" style="gap: 12px;">
+      {% for p in players %}
+        <div class="card" style="padding: 16px; border-left: 4px solid {{ 'var(--accent-gold)' if p.rank == 1 else 'var(--accent-silver)' if p.rank == 2 else 'var(--accent-bronze)' if p.rank == 3 else 'var(--accent-primary)' }};">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span class="badge {{ 'badge-open' if p.rank <= 3 else 'badge-upcoming' }}">RANK #{{ p.rank }}</span>
+              <h4 style="margin: 6px 0 2px;">{{ p.user.full_name }}</h4>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">@{{ p.user.username }}</span>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 1.3rem; font-weight: 800; color: var(--accent-purple-light);">{{ p.total_points }} pts</span>
+              <span style="font-size: 0.75rem; color: var(--accent-cyan); display: block;"><i class="fa-solid fa-skull"></i> {{ p.total_kills }} Kills</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Teams Leaderboard Tab -->
+  <div id="tab-teams" class="tab-pane">
+    <div class="card" style="padding: 0; overflow-x: auto;">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>TEAM NAME</th>
+            <th>CAPTAIN</th>
+            <th>ROSTER</th>
+            <th>CREATED</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tm in teams %}
+            <tr>
+              <td>#{{ loop.index }}</td>
+              <td style="font-weight: 700;">
+                {{ tm.name }} {% if tm.tag %}<span class="badge badge-upcoming">[{{ tm.tag }}]</span>{% endif %}
+              </td>
+              <td>@{{ tm.captain.username if tm.captain else 'N/A' }}</td>
+              <td><span class="badge badge-open">{{ tm.members.count() }} / 5 Members</span></td>
+              <td style="color: var(--text-muted);">{{ tm.created_at.strftime('%d %b %Y') if tm.created_at else '' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function switchLeaderboardTab(tab) {
+    document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.custom-tabs .nav-link').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+</script>
+{% endblock %}

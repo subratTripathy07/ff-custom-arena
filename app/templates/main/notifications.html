@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Notifications | {{ site_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-bell text-neon-warning"></i> Notification Center</h1>
+      <p class="page-subtitle">All your alerts, room releases, result updates, and payment confirmations.</p>
+    </div>
+    {% if notifications %}
+    <form method="POST" action="{{ url_for('support.mark_notifications_read') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-check-double"></i> Mark All as Read
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="{{ url_for('player.notifications') }}" class="btn btn-sm {{ 'btn-primary' if not filter else 'btn-secondary' }}">All</a>
+    <a href="{{ url_for('player.notifications', filter='unread') }}" class="btn btn-sm {{ 'btn-warning' if filter == 'unread' else 'btn-secondary' }}">
+      Unread {% if unread_count %}<span class="badge badge-warning ms-1">{{ unread_count }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('player.notifications', filter='read') }}" class="btn btn-sm {{ 'btn-secondary' if filter == 'read' else 'btn-secondary' }}">Read</a>
+  </div>
+
+  <div class="glass-panel p-3">
+    {% if notifications %}
+      <div class="notif-center-list">
+        {% for notif in notifications %}
+          <div class="notif-center-item d-flex align-items-start gap-3 p-3 mb-2 rounded {{ 'notif-unread' if not notif.is_read else '' }}">
+            <div class="notif-icon-circle">
+              {{ notif.icon or '🔔' }}
+            </div>
+            <div class="flex-grow-1">
+              <p class="mb-1 {{ 'fw-bold text-white' if not notif.is_read else 'text-secondary' }}">
+                {{ notif.message }}
+              </p>
+              <small class="text-muted">
+                <i class="fa-regular fa-clock"></i>
+                {{ notif.created_at.strftime('%d %b %Y at %I:%M %p') if notif.created_at else 'Just now' }}
+              </small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if notif.link %}
+                <a href="{{ notif.link }}" class="btn btn-ghost btn-sm py-0">View</a>
+              {% endif %}
+              {% if not notif.is_read %}
+                <form method="POST" action="{{ url_for('player.mark_notification_read', notif_id=notif.id) }}" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-ghost btn-sm py-0" title="Mark as read">
+                    <i class="fa-solid fa-circle-check text-neon-success"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if notifications.pages > 1 %}
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          {% if notifications.has_prev %}
+            <a href="{{ url_for('player.notifications', page=notifications.prev_num, filter=filter) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+          {% endif %}
+          <span class="btn btn-ghost btn-sm disabled">Page {{ notifications.page }} / {{ notifications.pages }}</span>
+          {% if notifications.has_next %}
+            <a href="{{ url_for('player.notifications', page=notifications.next_num, filter=filter) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state py-5 text-center">
+        <i class="fa-solid fa-bell-slash fa-3x text-muted mb-3 d-block"></i>
+        <h3>No Notifications</h3>
+        <p class="text-muted">You're all caught up! No new notifications at the moment.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

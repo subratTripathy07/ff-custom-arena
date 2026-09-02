@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}500 — Server Error | {{ site_name }}{% endblock %}
+{% block content %}
+<div class="error-page-wrapper">
+  <div class="error-content">
+    <div class="error-code" style="color: var(--accent-danger);">500</div>
+    <div class="error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h1 class="error-title">Server Malfunction</h1>
+    <p class="error-msg">Our servers encountered an unexpected error. Our team has been notified. Please try again in a few moments.</p>
+    <div class="error-actions">
+      <a href="{{ url_for('main.home') }}" class="btn btn-primary"><i class="fa-solid fa-house"></i> Return to Base</a>
+      <a href="{{ url_for('support.tickets') }}" class="btn btn-secondary"><i class="fa-solid fa-headset"></i> Contact Support</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

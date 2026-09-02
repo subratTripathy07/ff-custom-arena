@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Room Management | Admin Control Center{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-key text-neon-warning"></i> Room Management</h1>
+      <p class="page-subtitle">Create, configure, and schedule room credential releases for all active matches.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <select id="tournamentFilter" class="form-select form-select-sm" style="width:220px;" onchange="location.href='{{ url_for('admin.room_management') }}?tournament_id='+this.value">
+        <option value="">All Tournaments</option>
+        {% for t in tournaments %}
+          <option value="{{ t.id }}" {{ 'selected' if selected_tournament and selected_tournament.id == t.id else '' }}>{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  {% if matches %}
+    <div class="row g-4">
+      {% for match in matches %}
+        <div class="col-lg-6">
+          <div class="glass-panel p-4 h-100">
+            <!-- Match Header -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <div class="d-flex gap-2 mb-1">
+                  <span class="badge badge-secondary badge-sm">Round {{ match.round_number }}</span>
+                  <span class="badge badge-{{ 'danger' if match.status == 'live' else 'success' if match.status in ['room_released','completed'] else 'warning' if match.status == 'room_pending' else 'primary' }} badge-sm">
+                    {{ match.status.replace('_',' ').title() }}
+                  </span>
+                </div>
+                <h4 class="mb-0">{{ match.tournament.name }}</h4>
+                <small class="text-muted">Match #{{ match.match_number }} · {{ match.map_name or 'Bermuda' }} · {{ match.scheduled_date.strftime('%d %b') }} {{ match.scheduled_time.strftime('%I:%M %p') }}</small>
+              </div>
+              <a href="{{ url_for('competition.match_detail', match_id=match.id) }}" class="btn btn-ghost btn-sm py-0" target="_blank">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </a>
+            </div>
+
+            <!-- Current Room Status -->
+            {% if match.room %}
+              <div class="room-status-box glass-panel p-3 mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Room Credentials</span>
+                  <span class="badge badge-{{ 'success' if match.room.status == 'released' else 'warning' }} badge-sm">
+                    {{ match.room.status.title() }}
+                  </span>
+                </div>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label small text-muted">Room ID:</label>
+                    <div class="credential-display">
+                      {% if match.room.status == 'released' %}
+                        <code class="text-neon-primary">{{ match.room.room_id_code }}</code>
+                      {% else %}
+                        <code class="text-muted">••••••••</code>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small text-muted">Password:</label>
+                    <div class="credential-display">
+                      {% if match.room.status == 'released' %}
+                        <code class="text-neon-success">{{ match.room.room_password }}</code>
+                      {% else %}
+                        <code class="text-muted">••••••••</code>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                  <i class="fa-regular fa-clock"></i>
+                  Release: {{ match.room.release_time.strftime('%d %b %Y at %I:%M %p') }}
+                </small>
+              </div>
+            {% else %}
+              <div class="alert-box alert-warning-subtle mb-3 p-3 rounded">
+                <i class="fa-solid fa-triangle-exclamation text-neon-warning"></i>
+                No room credentials set for this match yet.
+              </div>
+            {% endif %}
+
+            <!-- Room Form: Create or Edit -->
+            <form method="POST" action="{{ url_for('competition.set_room', match_id=match.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label class="form-label small">Room ID / Code:</label>
+                  <input type="text" name="room_id" class="form-control form-control-sm"
+                         value="{{ match.room.room_id_code if match.room else '' }}"
+                         placeholder="e.g. FFAR2024" required maxlength="30">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Room Password:</label>
+                  <input type="text" name="room_password" class="form-control form-control-sm"
+                         value="{{ match.room.room_password if match.room else '' }}"
+                         placeholder="e.g. arena123" required maxlength="30">
+                </div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-12">
+                  <label class="form-label small">Release Date & Time (Auto-Reveal):</label>
+                  <input type="datetime-local" name="release_time" class="form-control form-control-sm"
+                         value="{{ match.room.release_time.strftime('%Y-%m-%dT%H:%M') if match.room else '' }}" required>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                  <i class="fa-solid fa-{{ 'pen' if match.room else 'plus' }}"></i>
+                  {{ 'Update Room' if match.room else 'Set Room Credentials' }}
+                </button>
+                {% if match.room %}
+                  <form method="POST" action="{{ url_for('admin.delete_room', room_id=match.room.id) }}" style="display:inline;" onsubmit="return confirm('Delete room credentials for Match #{{ match.match_number }}?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger btn-sm" title="Delete Room">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </form>
+
+            <!-- Manual Release Override -->
+            {% if match.room and match.room.status != 'released' %}
+              <hr class="border-dark mt-3">
+              <form method="POST" action="{{ url_for('admin.release_room_now', room_id=match.room.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-warning btn-sm w-100" onclick="return confirm('Release room credentials NOW to all registered teams?');">
+                  <i class="fa-solid fa-lock-open"></i> Release NOW (Manual Override)
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="glass-panel p-5 text-center">
+      <i class="fa-solid fa-key fa-3x text-muted mb-3 d-block"></i>
+      <h3>No Matches Found</h3>
+      <p class="text-muted">Select a tournament above or create matches first.</p>
+      <a href="{{ url_for('admin.list_tournaments') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-trophy"></i> Go to Tournaments
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

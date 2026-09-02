@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tournament.name }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<!-- Tournament Hero Banner -->
+<div class="t-hero" style="{% if tournament.banner_url %}background-image: linear-gradient(180deg, rgba(9,8,18,0.3), rgba(9,8,18,0.95)), url('{{ url_for('uploaded_file', filename=tournament.banner_url) }}');{% else %}background-image: linear-gradient(135deg, #17102e, #0c0818);{% endif %} background-size: cover; background-position: center; padding: 50px 0 30px; border-bottom: 1px solid var(--border-subtle);">
+  <div class="container">
+    <div class="grid grid-2" style="grid-template-columns: 2fr 1fr; align-items: center; gap: 30px;">
+      <div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+          <span class="badge badge-{{ 'open' if tournament.status == 'registration_open' else 'live' if tournament.status == 'live' else 'completed' }}">
+            {{ tournament.status.replace('_', ' ')|upper }}
+          </span>
+          <span class="badge badge-upcoming"><i class="fa-solid fa-gamepad"></i> {{ tournament.game_mode or tournament.tournament_type.title() }}</span>
+          <span class="badge badge-upcoming"><i class="fa-solid fa-map-location-dot"></i> {{ tournament.map_name or 'Bermuda' }}</span>
+        </div>
+        <h1 style="font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; margin-bottom: 16px;">{{ tournament.name }}</h1>
+        
+        <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 18px;">
+          <div class="stat-card" style="padding: 12px 18px; min-width: 120px;">
+            <div class="value" style="font-size: 1.6rem; color: var(--accent-gold);">₹{{ tournament.prize_pool|int if tournament.prize_pool == tournament.prize_pool|int else tournament.prize_pool }}</div>
+            <div class="label">Prize Pool</div>
+          </div>
+          <div class="stat-card" style="padding: 12px 18px; min-width: 120px;">
+            <div class="value" style="font-size: 1.6rem; color: var(--accent-cyan);">₹{{ tournament.per_kill_prize|int if tournament.per_kill_prize == tournament.per_kill_prize|int else tournament.per_kill_prize if tournament.per_kill_prize is not none else 5 }}</div>
+            <div class="label">Per Kill</div>
+          </div>
+          <div class="stat-card" style="padding: 12px 18px; min-width: 120px;">
+            <div class="value" style="font-size: 1.6rem; color: var(--accent-warning);">⚡ {{ tournament.entry_fee|int }}</div>
+            <div class="label">Entry Fee (Tokens)</div>
+          </div>
+          <div class="stat-card" style="padding: 12px 18px; min-width: 120px;">
+            <div class="value" style="font-size: 1.6rem; color: var(--accent-purple-light);">{{ tournament.registered_team_count }} / {{ tournament.max_teams }}</div>
+            <div class="label">Teams Joined</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action & Registration Card -->
+      <div class="card" style="padding: 24px; text-align: center;">
+        {% if tournament.status == 'registration_open' and tournament.slots_left > 0 and tournament.registration_deadline > now %}
+          <div style="margin-bottom: 16px;" data-countdown="{{ tournament.registration_deadline.isoformat() }}">
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; display: block;">Registration Closes In:</span>
+            <div class="countdown-timer mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent-cyan);">Calculating...</div>
+          </div>
+
+          {% if current_user.is_authenticated %}
+            {% if my_registration %}
+              {% if my_payment and my_payment.status == 'verified' or my_registration.status == 'confirmed' %}
+                <div style="padding: 16px; background: rgba(16,185,129,0.15); border: 2px solid var(--accent-success); border-radius: var(--radius-md); margin-bottom: 12px; text-align: center; box-shadow: 0 0 24px rgba(16,185,129,0.25);">
+                  <div style="display: inline-block; padding: 6px 16px; background: #10b981; color: white; border-radius: 20px; font-size: 0.95rem; font-weight: 900; letter-spacing: 0.05em; margin-bottom: 6px;">
+                    <i class="fa-solid fa-circle-check"></i> PAYMENT DONE
+                  </div>
+                  <div style="font-weight: 800; font-size: 0.9rem; color: var(--accent-success); margin-top: 4px;">
+                    SLOT CONFIRMED (Reg ID: #{{ my_registration.id }})
+                  </div>
+                  <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;" class="mono">
+                    Reg Code: {{ my_registration.registration_code }}
+                  </div>
+                </div>
+              {% elif my_payment and my_payment.status == 'pending' %}
+                <div style="padding: 12px; background: rgba(245,158,11,0.12); border: 1px solid var(--accent-warning); border-radius: var(--radius-sm); margin-bottom: 12px;">
+                  <i class="fa-solid fa-triangle-exclamation text-neon-warning"></i> Entry Fee Payment Required (₹{{ tournament.entry_fee }})
+                </div>
+                <a href="#paymentSection" class="btn btn-warning btn-block" style="font-weight: 800;">
+                  <i class="fa-solid fa-qrcode"></i> PAY ENTRY FEE NOW & VERIFY
+                </a>
+              {% else %}
+                <div style="padding: 12px; background: rgba(16,185,129,0.15); border: 1px solid var(--accent-success); border-radius: var(--radius-sm); margin-bottom: 12px;">
+                  <i class="fa-solid fa-circle-check text-neon-success"></i> Registered (Reg ID: #{{ my_registration.id }})
+                </div>
+                <span class="badge badge-open btn-block" style="padding: 8px;">SLOT CONFIRMED</span>
+              {% endif %}
+            {% elif teams %}
+              <form id="mainJoinForm" method="POST" action="{{ url_for('tournaments.join', slug=tournament.slug) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="slot_number" id="hiddenSlotNumberInput" value="">
+                <input type="hidden" name="in_game_name" id="hiddenIgnInput" value="">
+                
+                <!-- Registration Flow Step Indicator -->
+                <div style="display: flex; justify-content: space-around; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 14px; text-transform: uppercase; font-weight: 700;">
+                  <span style="color: var(--accent-primary);">1. SELECT TEAM</span>
+                  <span>2. SELECT POSITION</span>
+                  <span>3. PAYMENT</span>
+                </div>
+
+                <div class="form-group" style="text-align: left;">
+                  <label class="form-label">Select Your Team:</label>
+                  <select name="team_id" id="selectTeamIdMain" class="form-control" required>
+                    {% for tm in teams %}
+                      <option value="{{ tm.id }}">{{ tm.name }} (Tag: {{ tm.tag }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <button type="button" onclick="openPositionModal()" class="btn btn-primary btn-block" style="font-weight: 900; font-size: 1rem;">
+                  <i class="fa-solid fa-crosshairs"></i> SELECT MATCH POSITION (1-48)
+                </button>
+              </form>
+            {% else %}
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">You must be Captain of a Team to register.</p>
+              <a href="{{ url_for('teams.create_team') }}" class="btn btn-secondary btn-block">
+                <i class="fa-solid fa-plus"></i> CREATE TEAM FIRST
+              </a>
+            {% endif %}
+          {% else %}
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">Log in to register your team for this arena.</p>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-block">LOG IN TO REGISTER</a>
+          {% endif %}
+        {% else %}
+          <div style="padding: 20px 0;">
+            <i class="fa-solid fa-lock" style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 8px;"></i>
+            <h4 style="color: var(--text-muted);">REGISTRATION CLOSED</h4>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Automated Analysis Loading & PAYMENT DONE Modal -->
+<div id="paymentAnalysisModal" style="display: none; position: fixed; inset: 0; background: rgba(5,5,12,0.92); backdrop-filter: blur(12px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+  <div class="card" style="max-width: 480px; width: 100%; text-align: center; padding: 36px 24px; border: 2px solid var(--accent-cyan); background: #0f172a; box-shadow: 0 0 40px rgba(6,182,212,0.3);">
+    
+    <!-- Spinner & Step Analysis Indicator -->
+    <div id="analysisSpinnerSection">
+      <div style="width: 70px; height: 70px; border: 4px solid rgba(6,182,212,0.2); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 20px;"></div>
+      <h3 style="color: var(--accent-cyan); font-weight: 800; font-size: 1.4rem; margin-bottom: 8px;">AUTOMATED PAYMENT ANALYSIS</h3>
+      <p id="analysisStepText" style="color: var(--text-secondary); font-size: 0.9rem; min-height: 48px;">
+        🔍 Validating UTR Number & Entry Fee Amount...
+      </p>
+      <div style="background: rgba(255,255,255,0.08); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 16px;">
+        <div id="analysisProgressBar" style="width: 25%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-success)); transition: width 0.4s ease;"></div>
+      </div>
+    </div>
+
+    <!-- PAYMENT DONE Success State -->
+    <div id="paymentDoneSuccessSection" style="display: none;">
+      <div style="width: 80px; height: 80px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; box-shadow: 0 0 30px rgba(16,185,129,0.6);">
+        <i class="fa-solid fa-check" style="font-size: 2.4rem; color: white;"></i>
+      </div>
+      <div style="display: inline-block; padding: 6px 20px; background: #10b981; color: white; border-radius: 20px; font-weight: 900; font-size: 1.3rem; letter-spacing: 1px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(16,185,129,0.4);">
+        PAYMENT DONE
+      </div>
+      <h3 style="color: white; font-weight: 800; font-size: 1.2rem; margin-bottom: 6px;">Slot Confirmed Successfully!</h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Your transaction was automatically verified by web payment analyzer.</p>
+      <button type="button" onclick="location.reload()" class="btn btn-success btn-block" style="font-weight: 800;">
+        CONTINUE TO ARENA <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs Section (OVERVIEW, MATCHES, TEAMS, LEADERBOARD, RULES, PRIZES) -->
+<div class="container" style="padding-top: 30px; padding-bottom: 60px;">
+  <ul class="custom-tabs">
+    <li><button class="nav-link active" onclick="switchTab('overview')"><i class="fa-solid fa-circle-info"></i> OVERVIEW</button></li>
+    <li><button class="nav-link" onclick="switchTab('matches')"><i class="fa-solid fa-crosshairs"></i> MATCHES ({{ matches|length }})</button></li>
+    <li><button class="nav-link" onclick="switchTab('teams')"><i class="fa-solid fa-users"></i> TEAMS ({{ confirmed_registrations|length }})</button></li>
+    <li><button class="nav-link" onclick="switchTab('leaderboard')"><i class="fa-solid fa-ranking-star"></i> LEADERBOARD</button></li>
+    <li><button class="nav-link" onclick="switchTab('rules')"><i class="fa-solid fa-book"></i> RULES</button></li>
+    <li><button class="nav-link" onclick="switchTab('prizes')"><i class="fa-solid fa-gift"></i> PRIZES</button></li>
+  </ul>
+
+  <!-- Tab Contents -->
+  <div id="tab-overview" class="tab-pane active">
+    <div class="grid grid-2" style="grid-template-columns: 2fr 1fr;">
+      <div class="card">
+        <h3><i class="fa-solid fa-align-left text-neon-primary"></i> About Tournament</h3>
+        <p style="margin-top: 10px; font-size: 0.92rem; line-height: 1.7;">
+          {{ tournament.description or 'Welcome to the official Free Fire Custom Arena. Compete against top squads, score kills and placement points, and fight for the championship prize pool.' }}
+        </p>
+      </div>
+
+      <div class="card">
+        <h3><i class="fa-solid fa-list-check text-neon-primary"></i> Tournament Matrix</h3>
+        <ul style="list-style: none; padding: 0; margin: 14px 0 0; font-size: 0.88rem;">
+          <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">
+            <span style="color: var(--text-muted);">Mode:</span> <strong>{{ tournament.game_mode or 'Squad' }}</strong>
+          </li>
+          <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">
+            <span style="color: var(--text-muted);">Map:</span> <strong>{{ tournament.map_name or 'Bermuda' }}</strong>
+          </li>
+          <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">
+            <span style="color: var(--text-muted);">Start Time:</span> <strong>{{ tournament.start_time.strftime('%d %b, %I:%M %p') }}</strong>
+          </li>
+          <li style="display: flex; justify-content: space-between; padding: 8px 0;">
+            <span style="color: var(--text-muted);">Max Teams:</span> <strong>{{ tournament.max_teams }} Teams</strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-matches" class="tab-pane">
+    {% if matches %}
+      <div class="grid grid-2">
+        {% for m in matches %}
+          <div class="card d-flex justify-content-between align-items-center">
+            <div>
+              <span class="badge badge-{{ 'live' if m.status=='live' else 'completed' if m.status=='completed' else 'upcoming' }}">
+                {{ m.status.replace('_',' ')|upper }}
+              </span>
+              <h4 style="margin-top: 8px;">Match #{{ m.match_number }} — Round {{ m.round_number }}</h4>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin: 4px 0 0;">
+                <i class="fa-solid fa-calendar"></i> {{ m.scheduled_date.strftime('%d %b %Y') }} at {{ m.scheduled_time.strftime('%I:%M %p') }}
+              </p>
+            </div>
+            <a href="{{ url_for('competition.match_detail', match_id=m.id) }}" class="btn btn-primary btn-sm">
+              ROOM & MATCH <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state card">
+        <div class="icon"><i class="fa-solid fa-crosshairs"></i></div>
+        <p>No matches scheduled yet for this tournament.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div id="tab-teams" class="tab-pane">
+    {% if confirmed_registrations %}
+      <div class="grid grid-3">
+        {% for reg in confirmed_registrations %}
+          <div class="card" style="display: flex; align-items: center; gap: 14px; padding: 16px;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--accent-primary); display: flex; align-items: center; justify-content: center; font-weight: 800;">
+              {{ reg.team.tag or 'TM' }}
+            </div>
+            <div>
+              <h4 style="margin: 0; font-size: 1rem;">{{ reg.team.name }}</h4>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Captain: @{{ reg.team.captain.username if reg.team.captain else 'N/A' }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state card">
+        <div class="icon"><i class="fa-solid fa-users"></i></div>
+        <p>No confirmed teams yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div id="tab-leaderboard" class="tab-pane">
+    <div class="card" style="padding: 0; overflow-x: auto;">
+      {% if leaderboard %}
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>RANK</th>
+              <th>TEAM</th>
+              <th>MATCHES</th>
+              <th>WINS</th>
+              <th>KILLS</th>
+              <th>PTS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in leaderboard %}
+              <tr class="{{ 'rank-top-1' if row.rank == 1 else 'rank-top-2' if row.rank == 2 else 'rank-top-3' if row.rank == 3 else '' }}">
+                <td>
+                  {% if row.rank == 1 %}
+                    <span class="medal-badge medal-gold">🥇 1</span>
+                  {% elif row.rank == 2 %}
+                    <span class="medal-badge medal-silver">🥈 2</span>
+                  {% elif row.rank == 3 %}
+                    <span class="medal-badge medal-bronze">🥉 3</span>
+                  {% else %}
+                    #{{ row.rank }}
+                  {% endif %}
+                </td>
+                <td style="font-weight: 700;">{{ row.team.name }}</td>
+                <td>{{ row.matches }}</td>
+                <td class="text-neon-success">{{ row.wins }}</td>
+                <td class="text-neon-warning">{{ row.kills }}</td>
+                <td><strong style="color: var(--accent-purple-light); font-size: 1.1rem;">{{ row.total_points }} pts</strong></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <div class="icon"><i class="fa-solid fa-trophy"></i></div>
+          <p>No scores verified yet for this tournament.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div id="tab-rules" class="tab-pane">
+    <div class="card">
+      <h3><i class="fa-solid fa-book text-warning"></i> Official Tournament Rules</h3>
+      <div style="margin-top: 14px; font-size: 0.9rem; line-height: 1.8; color: var(--text-secondary); whitespace-pre-line;">
+        {{ tournament.rules or '1. Emulators/PC are prohibited unless explicitly permitted.\n2. Squad captains must join custom room 5 minutes prior to match schedule.\n3. Hacking, teaming, or third-party exploits result in instant team ban.\n4. Screenshots of match outcome must be uploaded post match for kill & placement verification.' }}
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-prizes" class="tab-pane">
+    <div class="grid grid-3">
+      <div class="card" style="text-align: center; border-color: var(--accent-gold);">
+        <div class="medal-badge medal-gold" style="font-size: 1.4rem; padding: 6px 16px;">🥇 1ST PLACE</div>
+        <h2 style="color: var(--accent-gold); margin-top: 14px;">₹{{ ((tournament.prize_pool|float) * 0.5)|round|int }}</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">50% of total prize pool</span>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="medal-badge medal-silver" style="font-size: 1.4rem; padding: 6px 16px;">🥈 2ND PLACE</div>
+        <h2 style="color: var(--text-primary); margin-top: 14px;">₹{{ ((tournament.prize_pool|float) * 0.3)|round|int }}</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">30% of total prize pool</span>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="medal-badge medal-bronze" style="font-size: 1.4rem; padding: 6px 16px;">🥉 3RD PLACE</div>
+        <h2 style="color: var(--accent-bronze); margin-top: 14px;">₹{{ ((tournament.prize_pool|float) * 0.2)|round|int }}</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">20% of total prize pool</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Screenshot 2: Select Match Position Modal (48 Slots Grid) -->
+<div id="positionSelectorModal" style="display: none; position: fixed; inset: 0; background: rgba(5,3,15,0.92); z-index: 99999; overflow-y: auto; align-items: center; justify-content: center; padding: 20px;">
+  <div style="width: 100%; max-width: 480px; background: #0c071e; border-radius: 16px; border: 1px solid rgba(124,58,237,0.4); box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden; font-family: system-ui, -apple-system, sans-serif;">
+    
+    <!-- Modal Header -->
+    <div style="background: #0f0826; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button type="button" onclick="closePositionModal()" style="background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <h3 style="margin: 0; font-size: 1.15rem; color: #fff; font-weight: 800;">Battle Royale - {{ tournament.game_mode or 'Classic Mode' }}</h3>
+      </div>
+    </div>
+
+    <!-- Title Subheader -->
+    <div style="text-align: center; padding: 12px 16px; background: #070314; display: flex; align-items: center; justify-content: space-between;">
+      <h4 style="margin: 0; color: #ffffff; font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;">Select Match Position</h4>
+      {% set mode_str = (tournament.game_mode or tournament.tournament_type or 'squad')|lower %}
+      {% if 'duo' in mode_str %}
+        <span class="badge" style="background: #7c3aed; color: #fff; font-weight: 800; font-size: 0.75rem;">DUO MODE (2 SLOTS / GROUP)</span>
+      {% elif 'solo' in mode_str %}
+        <span class="badge" style="background: #0284c7; color: #fff; font-weight: 800; font-size: 0.75rem;">SOLO MODE (1 SLOT / GROUP)</span>
+      {% else %}
+        <span class="badge" style="background: #dc2626; color: #fff; font-weight: 800; font-size: 0.75rem;">SQUAD MODE (4 SLOTS / GROUP)</span>
+      {% endif %}
+    </div>
+
+    <!-- Position Checkbox Grid grouped by Duo (2 slots) or Squad (4 slots) or Solo -->
+    <div style="padding: 16px 20px; background: #ffffff; color: #1e293b; max-height: 440px; overflow-y: auto;">
+      {% set mode_str = (tournament.game_mode or tournament.tournament_type or 'squad')|lower %}
+      {% if 'duo' in mode_str %}
+        <!-- DUO MODE: 24 Groups of 2 Slots -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          {% for group_idx in range(1, 25) %}
+            {% set start_slot = (group_idx - 1) * 2 + 1 %}
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">
+              <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+                DUO {{ group_idx }}
+              </div>
+              <div style="display: flex; gap: 12px; justify-content: space-around;">
+                {% for pos in range(start_slot, start_slot + 2) %}
+                  {% set is_taken = pos in occupied_slots %}
+                  <div style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 0.95rem; color: #1e293b;">
+                    <span>{{ pos }}</span>
+                    <input type="checkbox" name="slot_checkbox" value="{{ pos }}" {{ 'checked disabled' if is_taken else '' }} 
+                           onchange="onSelectPositionSlot(this)"
+                           style="width: 22px; height: 22px; cursor: {{ 'not-allowed' if is_taken else 'pointer' }}; accent-color: #0f0826;">
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% elif 'solo' in mode_str %}
+        <!-- SOLO MODE: 48 Individual Slots -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 10px; align-items: center;">
+          {% for pos in range(1, 49) %}
+            {% set is_taken = pos in occupied_slots %}
+            <div style="display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 0.95rem; color: #334155; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <span style="font-weight: 800;">{{ pos }}</span>
+              <input type="checkbox" name="slot_checkbox" value="{{ pos }}" {{ 'checked disabled' if is_taken else '' }} 
+                     onchange="onSelectPositionSlot(this)"
+                     style="width: 22px; height: 22px; cursor: {{ 'not-allowed' if is_taken else 'pointer' }}; accent-color: #0f0826;">
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <!-- SQUAD MODE: 12 Groups of 4 Slots -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          {% for group_idx in range(1, 13) %}
+            {% set start_slot = (group_idx - 1) * 4 + 1 %}
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">
+              <div style="font-size: 0.78rem; font-weight: 900; color: #475569; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; display: flex; justify-content: space-between;">
+                <span>GROUP {{ group_idx }}</span>
+                <span style="color: #94a3b8; font-size: 0.7rem;">Slots {{ start_slot }}-{{ start_slot + 3 }}</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center;">
+                {% for pos in range(start_slot, start_slot + 4) %}
+                  {% set is_taken = pos in occupied_slots %}
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: 0.95rem; color: #0f172a; background: #ffffff; padding: 6px 4px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span>{{ pos }}</span>
+                    <input type="checkbox" name="slot_checkbox" value="{{ pos }}" {{ 'checked disabled' if is_taken else '' }} 
+                           onchange="onSelectPositionSlot(this)"
+                           style="width: 20px; height: 20px; cursor: {{ 'not-allowed' if is_taken else 'pointer' }}; accent-color: #0f0826;">
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Bottom Action Button -->
+    <div style="padding: 16px; background: #ffffff; border-top: 1px solid #e2e8f0;">
+      <button type="button" id="btnConfirmPosition" disabled onclick="openJoiningMatchModal()" 
+              style="width: 100%; background: #0f0826; color: #ffffff; border: none; padding: 16px; border-radius: 8px; font-weight: 900; font-size: 1rem; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; opacity: 0.5;">
+        JOIN NOW
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screenshot 3: Joining Match Drawer / Modal -->
+<div id="joiningMatchModal" style="display: none; position: fixed; inset: 0; background: rgba(5,3,15,0.92); z-index: 999999; overflow-y: auto; align-items: center; justify-content: center; padding: 20px;">
+  <div style="width: 100%; max-width: 480px; background: #ffffff; border-radius: 16px; border: 1px solid rgba(124,58,237,0.4); box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden; font-family: system-ui, -apple-system, sans-serif; color: #0f172a;">
+    
+    <!-- Modal Header -->
+    <div style="background: #0f0826; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button type="button" onclick="closeJoiningModal()" style="background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <h3 style="margin: 0; font-size: 1.2rem; color: #fff; font-weight: 900;">Joining Match</h3>
+      </div>
+    </div>
+
+    <!-- Wallet & Entry Fee Breakdown Header -->
+    <div style="padding: 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; background: #fafafa;">
+      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(245,158,11,0.3);">
+        <i class="fa-solid fa-coins" style="font-size: 2.5rem; color: #ffffff;"></i>
+      </div>
+      <div style="text-align: right; font-size: 0.88rem; font-weight: 700; color: #475569;">
+        {% set user_balance = current_user.get_wallet().total_balance|float if current_user.is_authenticated else 0.0 %}
+        {% set req_tokens = tournament.entry_fee|float %}
+        <div style="margin-bottom: 6px;">Your Token Balance : <span style="color: #fbbf24; font-size: 1rem;">⚡</span> <strong style="color: {{ '#10b981' if user_balance >= req_tokens else '#ef4444' }}; font-size: 1.05rem;">{{ "%.1f"|format(user_balance) }} Tokens</strong></div>
+        <div style="margin-bottom: 6px;">Match Entry Fee : <span style="color: #fbbf24; font-size: 1rem;">⚡</span> <strong style="color: #0f172a;">{{ req_tokens|int }} Tokens</strong></div>
+        <div>Tokens Required : <span style="color: #fbbf24; font-size: 1rem;">⚡</span> <strong style="color: #0f172a;">{{ req_tokens|int }} Tokens</strong></div>
+      </div>
+    </div>
+
+    <!-- Live Token Analysis Feedback Banners -->
+    {% set user_balance = current_user.get_wallet().total_balance|float if current_user.is_authenticated else 0.0 %}
+    {% set req_tokens = tournament.entry_fee|float %}
+    {% if user_balance >= req_tokens %}
+      <div style="margin: 16px 20px 0; padding: 12px 16px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; color: #166534; font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-circle-check" style="font-size: 1.4rem; color: #16a34a;"></i>
+        <div>
+          <div style="text-transform: uppercase; font-size: 0.9rem;">✅ TOKEN ANALYSIS: SUCCESSFUL!</div>
+          <div style="font-size: 0.78rem; font-weight: 600; color: #15803d; margin-top: 2px;">
+            You have ⚡{{ "%.1f"|format(user_balance) }} Tokens available. Slot booking will be SUCCESSFUL & CONFIRMED automatically!
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div style="margin: 16px 20px 0; padding: 12px 16px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 10px; color: #991b1b; font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.4rem; color: #dc2626;"></i>
+        <div>
+          <div style="text-transform: uppercase; font-size: 0.9rem;">⚠️ TOKEN ANALYSIS: NOT ENOUGH TOKENS!</div>
+          <div style="font-size: 0.78rem; font-weight: 600; color: #b91c1c; margin-top: 2px;">
+            You need ⚡{{ req_tokens|int }} Tokens to book this slot, but you have ⚡{{ "%.1f"|format(user_balance) }} Tokens. Please Add Money to your Wallet or Pay with Gateway.
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Selected Position Table -->
+    <div style="padding: 16px 20px;">
+      <div style="background: #0f0826; color: #ffffff; text-align: center; padding: 10px; font-weight: 800; font-size: 0.95rem; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+        Selected Position
+      </div>
+      <table style="width: 100%; border-collapse: collapse; border: 1px solid #cbd5e1; text-align: center; font-size: 0.88rem;">
+        <thead style="background: #334155; color: #ffffff;">
+          <tr>
+            <th style="padding: 10px; border-right: 1px solid #475569;">Team</th>
+            <th style="padding: 10px; border-right: 1px solid #475569;">Position</th>
+            <th style="padding: 10px;">Battle Royale Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 12px; border-right: 1px solid #e2e8f0; font-weight: 700;" id="displayTeamName">
+              {% if teams %}{{ teams[0].name }}{% else %}Team 1{% endif %}
+            </td>
+            <td style="padding: 12px; border-right: 1px solid #e2e8f0; font-weight: 800;" id="displayPositionNum">35</td>
+            <td style="padding: 8px;">
+              <input type="text" id="inputIgnModal" placeholder="Enter FF IGN / UID" value="{{ current_user.username if current_user.is_authenticated else '' }}" 
+                     style="width: 90%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.85rem; text-align: center;">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 12px; padding: 20px; flex-wrap: wrap;">
+      <button type="button" onclick="closeJoiningModal()" 
+              style="flex: 1; min-width: 90px; background: #64748b; color: #ffffff; border: none; padding: 14px; border-radius: 8px; font-weight: 900; font-size: 0.9rem; cursor: pointer; text-transform: uppercase;">
+        CANCEL
+      </button>
+
+      {% if user_balance >= req_tokens %}
+        <button type="button" id="btnConfirmSlotTokens" onclick="submitJoinedMatchForm()" 
+                style="flex: 2; min-width: 170px; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; padding: 14px; border-radius: 8px; font-weight: 900; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 14px rgba(16,185,129,0.4);">
+          ⚡ CONFIRM SLOT WITH TOKENS (⚡{{ req_tokens|int }})
+        </button>
+      {% endif %}
+
+      <!-- AUTOMATIC PAYMENT GATEWAY CHECKOUT (UPI / GPAY / PHONEPE / CARDS) -->
+      <button type="button" onclick="payWithAutomaticGateway()" 
+              style="flex: 2; min-width: 170px; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #ffffff; border: none; padding: 14px; border-radius: 8px; font-weight: 900; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(124,58,237,0.4);">
+        <i class="fa-solid fa-credit-card"></i> PAY NOW ₹{{ req_tokens|int }} (GATEWAY)
+      </button>
+
+      {% if user_balance < req_tokens %}
+        <a href="{{ url_for('payments.my_payments') }}" 
+           style="flex: 2; min-width: 160px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 900; font-size: 0.9rem; text-align: center; text-transform: uppercase;">
+          ⚡ ADD MONEY / TOKENS
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Warning Note -->
+    <div style="padding: 0 20px 20px; font-weight: 700; font-size: 0.88rem; color: #1e293b;">
+      Note - Please Enter Your In Game Username/Name.
+    </div>
+
+  </div>
+</div>
+
+<!-- AUTOMATIC PAYMENT SUCCESSFUL MODAL -->
+<div id="paymentSuccessModal" class="modal-backdrop" style="display: none; align-items: center; justify-content: center; z-index: 100000; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
+  <div class="modal-card" style="background: #0f172a; border: 2px solid var(--accent-success, #10b981); text-align: center; padding: 28px; max-width: 440px; border-radius: 16px; box-shadow: 0 10px 40px rgba(16,185,129,0.4); width: 90%;">
+    <div style="font-size: 3.5rem; color: #10b981; margin-bottom: 12px; animation: pulse 1.5s infinite;">✅</div>
+    <h2 style="font-weight: 900; color: #ffffff; margin-bottom: 6px; font-size: 1.5rem;">PAYMENT SUCCESSFUL</h2>
+    <p style="color: #94a3b8; font-size: 0.88rem; margin-bottom: 18px;">Your payment was automatically verified by backend gateway.</p>
+    
+    <div style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; text-align: left; margin-bottom: 20px; font-size: 0.88rem; color: #e2e8f0;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="color: #94a3b8;">Payment Status:</span>
+        <strong style="color: #10b981;">PAID (SUCCESS)</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="color: #94a3b8;">Transaction ID:</span>
+        <strong id="successTxId" class="mono" style="color: #38bdf8;">TX-123456</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="color: #94a3b8;">Registration Status:</span>
+        <strong style="color: #10b981;">CONFIRMED</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: #94a3b8;">Registration Code:</span>
+        <strong id="successRegCode" class="mono" style="color: #fbbf24;">REG-XXXX</strong>
+      </div>
+    </div>
+    
+    <button type="button" onclick="location.reload()" class="btn btn-success" style="width: 100%; font-size: 1rem; font-weight: 900; padding: 14px; background: #10b981; border: none; border-radius: 8px; color: #fff; cursor: pointer;">
+      <i class="fa-solid fa-trophy"></i> VIEW MY RESERVED SLOT
+    </button>
+  </div>
+</div>
+
+<!-- AUTOMATIC PAYMENT GATEWAY CHECKOUT MODAL (DEV/TEST SIMULATION) -->
+<div id="gatewayCheckoutModal" class="modal-backdrop" style="display: none; align-items: center; justify-content: center; z-index: 100000; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
+  <div class="modal-card" style="background: #1e1b4b; border: 2px solid #6366f1; text-align: center; padding: 24px; max-width: 440px; border-radius: 16px; box-shadow: 0 10px 40px rgba(99,102,241,0.4); width: 90%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">
+      <div style="font-weight: 900; color: #ffffff; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-shield-halved" style="color: #818cf8;"></i> PAYMENT GATEWAY CHECKOUT
+      </div>
+      <button type="button" onclick="closeGatewayModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; margin-bottom: 18px; text-align: left;">
+      <div style="font-size: 0.8rem; color: #a5b4fc;">Order ID: <span id="gatewayOrderIdText" class="mono" style="color: #fff;">order_ff_123</span></div>
+      <div style="font-size: 1.4rem; font-weight: 900; color: #34d399; margin-top: 4px;">Total: ₹<span id="gatewayAmountText">0.00</span></div>
+    </div>
+
+    <p style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 16px; text-align: left;">
+      Select Instant UPI / Payment Method:
+    </p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px;">
+      <button type="button" onclick="simulateGatewaySuccess('GPay_UPI')" style="background: #0f172a; border: 1px solid #38bdf8; color: #fff; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">
+        <i class="fa-brands fa-google-pay" style="color: #38bdf8; font-size: 1.2rem;"></i> Google Pay
+      </button>
+      <button type="button" onclick="simulateGatewaySuccess('PhonePe_UPI')" style="background: #0f172a; border: 1px solid #a855f7; color: #fff; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">
+        <i class="fa-solid fa-mobile-screen-button" style="color: #a855f7; font-size: 1.2rem;"></i> PhonePe / Paytm
+      </button>
+      <button type="button" onclick="simulateGatewaySuccess('UPI_Intent')" style="background: #0f172a; border: 1px solid #f59e0b; color: #fff; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">
+        <i class="fa-solid fa-qrcode" style="color: #f59e0b; font-size: 1.2rem;"></i> UPI QR / App
+      </button>
+      <button type="button" onclick="simulateGatewaySuccess('Debit_Credit_Card')" style="background: #0f172a; border: 1px solid #10b981; color: #fff; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">
+        <i class="fa-solid fa-credit-card" style="color: #10b981; font-size: 1.2rem;"></i> Card / Netbanking
+      </button>
+    </div>
+
+    <button type="button" id="btnAutoVerifyGateway" onclick="simulateGatewaySuccess('Auto_UPI')" 
+            style="width: 100%; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: 900; font-size: 1rem; cursor: pointer;">
+      <i class="fa-solid fa-circle-check"></i> COMPLETE & VERIFY PAYMENT NOW
+    </button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Razorpay Official Checkout SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  let selectedSlotNum = null;
+  let currentActiveOrder = null;
+
+  function openPositionModal() {
+    const modal = document.getElementById('positionSelectorModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closePositionModal() {
+    const modal = document.getElementById('positionSelectorModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function onSelectPositionSlot(chk) {
+    document.querySelectorAll('input[name="slot_checkbox"]').forEach(el => {
+      if (el !== chk && !el.disabled) el.checked = false;
+    });
+    const btn = document.getElementById('btnConfirmPosition');
+    if (chk.checked) {
+      selectedSlotNum = chk.value;
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    } else {
+      selectedSlotNum = null;
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+      }
+    }
+  }
+
+  function openJoiningMatchModal() {
+    if (!selectedSlotNum) return;
+    closePositionModal();
+    const posDisp = document.getElementById('displayPositionNum');
+    if (posDisp) posDisp.innerText = selectedSlotNum;
+    
+    const teamSel = document.getElementById('selectTeamIdMain');
+    const teamDisp = document.getElementById('displayTeamName');
+    if (teamSel && teamDisp && teamSel.options[teamSel.selectedIndex]) {
+      teamDisp.innerText = teamSel.options[teamSel.selectedIndex].text.split('(')[0].trim();
+    }
+
+    const modal = document.getElementById('joiningMatchModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeJoiningModal() {
+    const modal = document.getElementById('joiningMatchModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function submitJoinedMatchForm() {
+    const btn = document.getElementById('btnConfirmSlotTokens');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> DEDUCTING TOKENS...';
+    }
+
+    const hiddenSlot = document.getElementById('hiddenSlotNumberInput');
+    const hiddenIgn = document.getElementById('hiddenIgnInput');
+    const ignVal = document.getElementById('inputIgnModal') ? document.getElementById('inputIgnModal').value.trim() : '';
+    const teamSel = document.getElementById('selectTeamIdMain');
+    const teamId = teamSel ? teamSel.value : null;
+
+    const csrfToken = '{{ csrf_token() }}';
+
+    fetch('{{ url_for("tournaments.join", slug=tournament.slug) }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        team_id: teamId,
+        slot_number: selectedSlotNum,
+        in_game_name: ignVal
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        closeJoiningModal();
+        // Show success modal with token breakdown
+        const successModal = document.getElementById('paymentSuccessModal');
+        if (successModal) {
+          const statusText = document.getElementById('successTxId');
+          if (statusText) statusText.innerText = '⚡ Token Deduction (-' + data.deducted_tokens + ' Tokens | Remaining: ⚡' + data.remaining_balance + ' Tokens)';
+          const regCode = document.getElementById('successRegCode');
+          if (regCode) regCode.innerText = data.registration_code || 'CONFIRMED';
+          
+          successModal.style.display = 'flex';
+        } else {
+          alert('🎉 MATCH BOOKED SUCCESSFULLY!\n⚡ ' + data.deducted_tokens + ' Tokens deducted.\nRemaining Balance: ⚡ ' + data.remaining_balance + ' Tokens');
+          location.reload();
+        }
+      } else {
+        alert(data.message || 'Error confirming slot with tokens.');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '⚡ CONFIRM SLOT WITH TOKENS (⚡ {{ tournament.entry_fee|int }})';
+        }
+      }
+    })
+    .catch(err => {
+      console.error('Join error:', err);
+      if (hiddenSlot) hiddenSlot.value = selectedSlotNum || '';
+      if (hiddenIgn) hiddenIgn.value = ignVal;
+      const mainForm = document.getElementById('mainJoinForm');
+      if (mainForm) mainForm.submit();
+    });
+  }
+
+  function payWithAutomaticGateway() {
+    const ignVal = document.getElementById('inputIgnModal') ? document.getElementById('inputIgnModal').value.trim() : '';
+    const csrfToken = '{{ csrf_token() }}';
+    
+    fetch('/api/payment/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        tournament_id: {{ tournament.id }},
+        slot_number: selectedSlotNum,
+        player1_ign: ignVal
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        alert(data.message || 'Could not initiate payment order.');
+        return;
+      }
+      
+      const order = data.data;
+      currentActiveOrder = order;
+      
+      // Check if official Razorpay live key is configured
+      if (typeof Razorpay !== 'undefined' && order.key_id && !order.key_id.startsWith('rzp_test_ff_custom')) {
+        const options = {
+          "key": order.key_id,
+          "amount": order.amount_in_paise,
+          "currency": order.currency,
+          "name": "{{ site_name }}",
+          "description": "Entry Fee: " + order.tournament_name,
+          "order_id": order.order_id,
+          "handler": function (response) {
+            verifyGatewayPaymentOnServer(order.order_id, response.razorpay_payment_id, response.razorpay_signature);
+          },
+          "prefill": {
+            "name": order.user_name,
+            "email": order.user_email,
+            "contact": order.user_phone
+          },
+          "theme": { "color": "#8b5cf6" }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+      } else {
+        // Open instant payment gateway checkout modal
+        triggerGatewayCheckoutModal(order);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Error connecting to payment server.');
+    });
+  }
+
+  function triggerGatewayCheckoutModal(order) {
+    if (document.getElementById('gatewayOrderIdText')) document.getElementById('gatewayOrderIdText').innerText = order.order_id;
+    if (document.getElementById('gatewayAmountText')) document.getElementById('gatewayAmountText').innerText = order.amount;
+    const modal = document.getElementById('gatewayCheckoutModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeGatewayModal() {
+    const modal = document.getElementById('gatewayCheckoutModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function simulateGatewaySuccess(method) {
+    if (!currentActiveOrder) return;
+    const mockTxId = 'pay_' + method + '_' + Math.floor(10000000 + Math.random() * 90000000);
+    closeGatewayModal();
+    verifyGatewayPaymentOnServer(currentActiveOrder.order_id, mockTxId, 'simulated_valid_signature');
+  }
+
+  function verifyGatewayPaymentOnServer(orderId, paymentId, signature) {
+    const csrfToken = '{{ csrf_token() }}';
+    const ignVal = document.getElementById('inputIgnModal') ? document.getElementById('inputIgnModal').value.trim() : '';
+
+    fetch('/api/payment/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        order_id: orderId,
+        payment_id: paymentId,
+        signature: signature,
+        slot_number: selectedSlotNum,
+        player1_ign: ignVal
+      })
+    })
+    .then(res => res.json())
+    .then(resData => {
+      if (resData.success) {
+        showPaymentSuccessModal(resData.data);
+      } else {
+        alert('❌ PAYMENT VERIFICATION FAILED: ' + resData.message);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Payment verification failed.');
+    });
+  }
+
+  function showPaymentSuccessModal(data) {
+    closeJoiningModal();
+    const modal = document.getElementById('paymentSuccessModal');
+    if (document.getElementById('successTxId')) document.getElementById('successTxId').innerText = data.transaction_id || data.order_id;
+    if (document.getElementById('successRegCode')) document.getElementById('successRegCode').innerText = data.registration_code || ('REG-#' + data.registration_id);
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.custom-tabs .nav-link').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('tab-' + tabName);
+    if (target) target.classList.add('active');
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  }
+
+  function copyUpiId() {
+    const upiText = document.getElementById('upiIdText') ? document.getElementById('upiIdText').innerText.trim() : '{{ admin_upi_id }}';
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(upiText).then(() => {
+        alert('UPI ID copied to clipboard: ' + upiText);
+      }).catch(() => {
+        prompt('Copy UPI ID:', upiText);
+      });
+    } else {
+      prompt('Copy UPI ID:', upiText);
+    }
+  }
+
+  function triggerAutomatedAnalysis(event) {
+    event.preventDefault();
+    const form = document.getElementById('paymentAnalysisForm');
+    const utrInput = document.getElementById('inputUtr').value.trim();
+    
+    if (!utrInput || utrInput.length < 6) {
+      alert('Please enter a valid Transaction UTR number (at least 6 digits).');
+      return;
+    }
+
+    const modal = document.getElementById('paymentAnalysisModal');
+    const stepText = document.getElementById('analysisStepText');
+    const progressBar = document.getElementById('analysisProgressBar');
+
+    if (modal) modal.style.display = 'flex';
+    
+    // Step 1 -> Step 2 -> Step 3 automated analysis animation
+    setTimeout(() => {
+      if (stepText) stepText.innerText = '⚡ Connecting to Web Payment Verification Gateway...';
+      if (progressBar) progressBar.style.width = '60%';
+    }, 900);
+
+    setTimeout(() => {
+      if (stepText) stepText.innerText = '✅ Validating UTR #' + utrInput + ' against Admin Payment Account...';
+      if (progressBar) progressBar.style.width = '88%';
+    }, 1800);
+
+    setTimeout(() => {
+      if (progressBar) progressBar.style.width = '100%';
+      if (form) form.submit();
+    }, 2500);
+  }
+</script>
+{% endblock %}

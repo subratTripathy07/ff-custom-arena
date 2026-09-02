@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Proofs & Evidence Gallery | Admin Control Center{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-images text-neon-accent"></i> Proofs & Evidence Gallery</h1>
+      <p class="page-subtitle">Centralized media inspection for payment receipts, match scoreboards, and dispute evidence.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.list_proofs') }}" class="btn btn-sm {{ 'btn-primary' if not proof_type else 'btn-secondary' }}">All Proofs</a>
+      <a href="{{ url_for('admin.list_proofs', type='payment') }}" class="btn btn-sm {{ 'btn-success' if proof_type == 'payment' else 'btn-secondary' }}">💳 Payments</a>
+      <a href="{{ url_for('admin.list_proofs', type='result') }}" class="btn btn-sm {{ 'btn-warning' if proof_type == 'result' else 'btn-secondary' }}">📊 Results</a>
+      <a href="{{ url_for('admin.list_proofs', type='dispute') }}" class="btn btn-sm {{ 'btn-danger' if proof_type == 'dispute' else 'btn-secondary' }}">⚖️ Disputes</a>
+    </div>
+  </div>
+
+  <div class="glass-panel p-4">
+    {% if proofs %}
+      <div class="grid grid-3">
+        {% for p in proofs %}
+          <div class="card t-card card-glow-hover p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge badge-{{ 'success' if p.category == 'payment' else 'warning' if p.category == 'result' else 'danger' }} badge-sm">
+                {{ p.category.upper() }}
+              </span>
+              <span class="badge badge-{{ 'success' if p.status == 'verified' else 'warning' if p.status in ['pending', 'under_review', 'open'] else 'danger' }} badge-sm">
+                {{ p.status.replace('_', ' ').title() }}
+              </span>
+            </div>
+
+            <div class="proof-thumbnail-box mb-3 text-center bg-dark rounded p-2" style="min-height: 160px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+              <a href="{{ url_for('uploaded_file', filename=p.file_path) }}" target="_blank">
+                <img src="{{ url_for('uploaded_file', filename=p.file_path) }}" 
+                     alt="Proof #{{ p.id }}" 
+                     style="max-height: 180px; width: auto; object-fit: contain; border-radius: 6px;"
+                     onerror="this.parentElement.innerHTML='<i class=\"fa-solid fa-file-image fa-3x text-muted\"></i>'">
+              </a>
+            </div>
+
+            <h5 class="mb-1 text-truncate" title="{{ p.title }}">{{ p.title }}</h5>
+            <small class="text-muted d-block mb-3">
+              <i class="fa-regular fa-clock"></i> {{ p.created_at.strftime('%d %b %Y, %I:%M %p') if p.created_at else '' }}
+              {% if p.uploaded_by %} &nbsp;|&nbsp; By: @{{ p.uploaded_by }}{% endif %}
+            </small>
+
+            <div class="d-flex gap-1 pt-2 border-top border-dark">
+              <a href="{{ url_for('uploaded_file', filename=p.file_path) }}" target="_blank" class="btn btn-secondary btn-sm flex-grow-1">
+                <i class="fa-solid fa-expand"></i> Inspect Full
+              </a>
+              {% if p.action_url %}
+                <a href="{{ p.action_url }}" class="btn btn-primary btn-sm">
+                  Review <i class="fa-solid fa-arrow-right"></i>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state py-5 text-center">
+        <i class="fa-solid fa-images fa-3x text-muted mb-3 d-block"></i>
+        <h3>No Proofs Uploaded</h3>
+        <p class="text-muted">No media files match your filter at this moment.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

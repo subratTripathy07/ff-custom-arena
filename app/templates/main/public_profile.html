@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Player @{{ user.username }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="profile-header-card glass-panel mb-4">
+    <div class="profile-header-content">
+      <div class="profile-avatar-wrapper">
+        <img src="{{ url_for('static', filename='img/' ~ user.avatar_url) if not user.avatar_url.startswith('avatars/') else url_for('uploaded_file', filename=user.avatar_url) }}" 
+             alt="{{ user.username }}" 
+             class="profile-avatar-lg"
+             onerror="this.src='{{ url_for('static', filename='img/default_avatar.png') }}'">
+        <span class="role-badge badge-{{ user.role_name }}">{{ user.role_name.replace('_', ' ').title() }}</span>
+      </div>
+      <div class="profile-header-info">
+        <h1 class="profile-name">{{ user.full_name }}</h1>
+        <p class="profile-username">@{{ user.username }}</p>
+        <div class="profile-tags">
+          {% if profile and profile.ff_uid %}
+            <span class="badge badge-primary"><i class="fa-solid fa-gamepad"></i> FF UID: <strong>{{ profile.ff_uid }}</strong></span>
+          {% endif %}
+          {% if profile and profile.ff_ign %}
+            <span class="badge badge-info"><i class="fa-solid fa-signature"></i> IGN: <strong>{{ profile.ff_ign }}</strong></span>
+          {% endif %}
+          {% if profile and profile.country %}
+            <span class="badge badge-secondary"><i class="fa-solid fa-globe"></i> {{ profile.country }}</span>
+          {% endif %}
+        </div>
+        {% if profile and profile.bio %}
+          <p class="profile-bio mt-2">{{ profile.bio }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="glass-panel p-4 mb-4">
+        <h3 class="section-title"><i class="fa-solid fa-chart-simple text-neon-primary"></i> Career Stats</h3>
+        <div class="stats-metric-grid mt-3">
+          <div class="stat-box">
+            <span class="stat-val">{{ stats.matches_played if stats else 0 }}</span>
+            <span class="stat-lbl">Matches</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val text-neon-success">{{ stats.wins if stats else 0 }}</span>
+            <span class="stat-lbl">Wins</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val text-neon-warning">{{ stats.total_kills if stats else 0 }}</span>
+            <span class="stat-lbl">Kills</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val text-neon-primary">{{ stats.total_points if stats else 0 }}</span>
+            <span class="stat-lbl">Points</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val text-neon-accent">{{ stats.mvp_count if stats else 0 }}</span>
+            <span class="stat-lbl">MVPs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-panel p-4">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-medal text-neon-warning"></i> Achievements</h3>
+        <div class="achievements-grid">
+          {% for ach in all_achievements %}
+            {% set is_unlocked = ach.id in unlocked_ids %}
+            <div class="achievement-card {{ 'unlocked' if is_unlocked else 'locked' }}">
+              <div class="achievement-icon">{{ ach.icon }}</div>
+              <div class="achievement-details">
+                <h4 class="achievement-title">{{ ach.title }}</h4>
+                <p class="achievement-desc">{{ ach.description }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="glass-panel p-4">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-users text-neon-primary"></i> Teams</h3>
+        {% if user.team_memberships.count() > 0 %}
+          <div class="team-list">
+            {% for tm in user.team_memberships %}
+              <div class="team-mini-card mb-2">
+                <span class="fw-bold">{{ tm.team.name }}</span>
+                {% if tm.is_substitute %}
+                  <span class="badge badge-secondary badge-sm">Sub</span>
+                {% elif tm.team.captain_id == user.id %}
+                  <span class="badge badge-warning badge-sm">Captain</span>
+                {% else %}
+                  <span class="badge badge-primary badge-sm">Player</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">Not currently in any active team.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

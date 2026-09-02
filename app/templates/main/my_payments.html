@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}My Wallet | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div style="min-height: 100vh; background: #070314; color: #ffffff; padding-bottom: 60px; font-family: system-ui, -apple-system, sans-serif;">
+  
+  <!-- Header Bar matching Screenshot 4 -->
+  <div style="background: #0f0826; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08);">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <a href="{{ url_for('tournaments.list_tournaments') }}" style="color: #ffffff; text-decoration: none; font-size: 1.3rem;">
+        <i class="fa-solid fa-arrow-left"></i>
+      </a>
+      <h2 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: #ffffff;">My Wallet</h2>
+    </div>
+  </div>
+
+  <div class="container" style="max-width: 500px; margin: 24px auto; padding: 0 16px;">
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}" style="margin-bottom: 20px; border-radius: 10px; padding: 14px; font-weight: 700;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Screenshot 4 Card Container -->
+    <div style="background: #11082c; border-radius: 18px; border: 1px solid rgba(124,58,237,0.3); padding: 24px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);">
+      
+      <!-- Row 1: Total Balance -->
+      <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.12);">
+        <div>
+          <div style="font-size: 1.15rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Total Balance</div>
+          <div style="font-size: 1.8rem; font-weight: 900; color: #ffffff;">⚡ {{ current_user.coins_balance if current_user.coins_balance is not none else (wallet.total_balance|int) }} <span style="font-size: 1rem; color: #fbbf24; font-weight: 800;">Virtual Coins (₹{{ "%.0f"|format(wallet.total_balance|float) }})</span></div>
+        </div>
+        <div>
+          <button type="button" onclick="toggleTransactionsView()" 
+                  style="background: #5b21b6; color: #ffffff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-wallet"></i> TRANSACTIONS
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 2: Deposited -->
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.12);">
+        <div>
+          <div style="font-size: 1.15rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Deposited Coins</div>
+          <div style="font-size: 1.8rem; font-weight: 900; color: #ffffff;">⚡ {{ current_user.coins_balance if current_user.coins_balance is not none else (wallet.available_balance|int) }}</div>
+        </div>
+        <div>
+          <button type="button" onclick="openAddMoneyModal()" 
+                  style="background: #dc2626; color: #ffffff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-wallet"></i> ADD MONEY
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 3: Winning -->
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.12);">
+        <div>
+          <div style="font-size: 1.15rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Winning</div>
+          <div style="font-size: 1.8rem; font-weight: 900; color: #ffffff;">{{ "%.1f"|format(wallet.winning_balance|float) }}</div>
+        </div>
+        <div>
+          <a href="{{ url_for('payments.withdraw_page') }}" 
+             style="background: #7c3aed; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-wallet"></i> WITHDRAW
+          </a>
+        </div>
+      </div>
+
+      <!-- Row 4: Payouts -->
+      <div style="padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.12);">
+        <div style="font-size: 1.15rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Payouts</div>
+        <div style="font-size: 1.8rem; font-weight: 900; color: #ffffff;">0</div>
+      </div>
+
+      <!-- Row 5: Earnings -->
+      <div style="padding-top: 20px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Earnings</div>
+        <div style="font-size: 1.8rem; font-weight: 900; color: #ffffff;">0</div>
+      </div>
+
+    </div>
+
+    <!-- Transactions Audit Section (Hidden by default, toggled on click) -->
+    <div id="transactionsAuditSection" style="display: none; margin-top: 24px; background: #11082c; border-radius: 16px; border: 1px solid rgba(124,58,237,0.3); padding: 20px;">
+      <h3 style="margin-top: 0; font-size: 1.1rem; font-weight: 800; color: #a78bfa; margin-bottom: 14px;">
+        <i class="fa-solid fa-clock-rotate-left"></i> Transaction History
+      </h3>
+      {% if wallet_txs %}
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8; text-align: left;">
+                <th style="padding: 8px;">TYPE</th>
+                <th style="padding: 8px;">DESC</th>
+                <th style="padding: 8px;">AMOUNT</th>
+                <th style="padding: 8px;">DATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tx in wallet_txs %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 10px 8px; font-weight: 800; color: #a78bfa;">{{ tx.transaction_type|upper }}</td>
+                  <td style="padding: 10px 8px; color: #cbd5e1;">{{ tx.description }}</td>
+                  <td style="padding: 10px 8px; font-weight: 800; color: {{ '#10b981' if tx.amount > 0 else '#f43f5e' }};">
+                    {{ "%.1f"|format(tx.amount|float) }}
+                  </td>
+                  <td style="padding: 10px 8px; color: #64748b; font-size: 0.75rem;">{{ tx.created_at.strftime('%d/%m %I:%M%p') }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p style="color: #64748b; font-size: 0.85rem; text-align: center; margin: 10px 0;">No wallet transactions recorded yet.</p>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: 100% AUTOMATED INSTANT COIN TOP-UP GATEWAY -->
+<div id="addMoneyModal" style="display: none; position: fixed; inset: 0; background: rgba(5,3,15,0.92); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+  <div style="width: 100%; max-width: 480px; background: #0c071e; border-radius: 20px; border: 1px solid rgba(124,58,237,0.5); box-shadow: 0 10px 40px rgba(0,0,0,0.9); overflow: hidden; color: #ffffff;">
+    
+    <!-- Modal Header -->
+    <div style="background: linear-gradient(135deg, #1e1b4b, #0f0826); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <h3 style="margin: 0; font-size: 1.2rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-bolt text-warning"></i> Instant Token Top-Up Gateway
+      </h3>
+      <button type="button" onclick="closeAddMoneyModal()" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">✕</button>
+    </div>
+
+    <div style="padding: 24px;">
+      
+      <!-- Exchange Rate Banner -->
+      <div style="background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.4); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.88rem; color: #cbd5e1; font-weight: 700;">Exchange Rate:</span>
+        <span style="font-size: 1rem; font-weight: 900; color: #fbbf24;">₹1 = ⚡ 1 Token / Coin</span>
+      </div>
+
+      <!-- Step 1: Dynamic Custom Amount Input -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 0.88rem; font-weight: 800; margin-bottom: 8px; color: #e2e8f0;">Enter Custom Amount (₹):</label>
+        <div style="position: relative;">
+          <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.3rem; font-weight: 900; color: #fbbf24;">₹</span>
+          <input type="number" id="customDepositAmount" placeholder="Enter amount (e.g. 20, 50, 100)" min="1" step="1" value="20"
+                 oninput="updateCoinsPreview()"
+                 style="width: 100%; padding: 12px 14px 12px 38px; background: #1e1b4b; border: 2px solid #7c3aed; border-radius: 12px; color: #fff; font-size: 1.3rem; font-weight: 900; outline: none;">
+        </div>
+      </div>
+
+      <!-- Quick Amount Preset Chips -->
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">Quick Presets:</label>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+          <button type="button" onclick="selectPresetAmount(10)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹10</button>
+          <button type="button" onclick="selectPresetAmount(50)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹50</button>
+          <button type="button" onclick="selectPresetAmount(100)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹100</button>
+          <button type="button" onclick="selectPresetAmount(500)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹500</button>
+        </div>
+      </div>
+
+      <!-- Tokens Preview Box -->
+      <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 14px; text-align: center; margin-bottom: 22px;">
+        <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px;">Tokens You Will Receive Immediately:</span>
+        <div style="font-size: 1.6rem; font-weight: 900; color: #10b981;" id="tokensPreview">
+          ⚡ 20 Tokens
+        </div>
+      </div>
+
+      <!-- Instant Payment Gateway Action Button -->
+      <button type="button" id="payGatewayBtn" onclick="initiateAutomatedGatewayPayment()" 
+              style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; padding: 16px; border-radius: 12px; font-weight: 900; font-size: 1.05rem; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(16,185,129,0.4); display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <i class="fa-solid fa-lock"></i> PAY VIA UPI / GPAY / PHONEPE ⚡
+      </button>
+
+      <div style="margin-top: 14px; text-align: center; font-size: 0.75rem; color: #64748b;">
+        <i class="fa-solid fa-shield-halved text-success"></i> 100% Encrypted & Automated Zero-Admin Webhook Credit
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function openAddMoneyModal() {
+    document.getElementById('addMoneyModal').style.display = 'flex';
+    updateCoinsPreview();
+  }
+
+  function closeAddMoneyModal() {
+    document.getElementById('addMoneyModal').style.display = 'none';
+  }
+
+  function selectPresetAmount(amt) {
+    const input = document.getElementById('customDepositAmount');
+    if (input) {
+      input.value = amt;
+      updateCoinsPreview();
+    }
+  }
+
+  function updateCoinsPreview() {
+    const input = document.getElementById('customDepositAmount');
+    const preview = document.getElementById('tokensPreview');
+    const amt = parseInt(input ? input.value : 0) || 0;
+    if (preview) {
+      preview.innerHTML = `⚡ ${amt} Tokens`;
+    }
+  }
+
+  function initiateAutomatedGatewayPayment() {
+    const amountInput = document.getElementById('customDepositAmount');
+    const amount = parseFloat(amountInput ? amountInput.value : 0);
+
+    if (!amount || amount <= 0) {
+      alert("Please enter a valid deposit amount (minimum ₹1).");
+      return;
+    }
+
+    const btn = document.getElementById('payGatewayBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GENERATING GATEWAY CHECKOUT...';
+
+    // Call Automated Order Creation API
+    fetch('/api/create-topup-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        amount: amount,
+        coins_to_add: Math.floor(amount)
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-lock"></i> PAY VIA UPI / GPAY / PHONEPE ⚡';
+
+      if (data.success && data.data && data.data.upi_intent) {
+        const upiUri = data.data.upi_intent;
+        // Direct launch of UPI Intent on Mobile/Desktop or Gateway
+        window.location.href = upiUri;
+      } else if (data.message) {
+        alert("Gateway Notice: " + data.message);
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-lock"></i> PAY VIA UPI / GPAY / PHONEPE ⚡';
+      alert("Connection error connecting to payment gateway.");
+    });
+  }
+
+  function toggleTransactionsView() {
+    const sec = document.getElementById('transactionsAuditSection');
+    if (sec) {
+      sec.style.display = (sec.style.display === 'none') ? 'block' : 'none';
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ tournament.name }} | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a href="{{ url_for('admin.manage_tournament', tournament_id=tournament.id) }}" class="btn btn-secondary btn-sm mb-2">
+        <i class="fa-solid fa-arrow-left"></i> Back to Manage
+      </a>
+      <h1 class="page-title"><i class="fa-solid fa-pen-to-square text-neon-primary"></i> Edit Tournament: {{ tournament.name }}</h1>
+    </div>
+  </div>
+
+  <div class="glass-panel p-4">
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Tournament Name:</label>
+          <input type="text" name="name" class="form-control" value="{{ tournament.name }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Status Override:</label>
+          <select name="status" class="form-select">
+            <option value="registration_open" {{ 'selected' if tournament.status == 'registration_open' else '' }}>Registration Open</option>
+            <option value="closing_soon" {{ 'selected' if tournament.status == 'closing_soon' else '' }}>Closing Soon</option>
+            <option value="live" {{ 'selected' if tournament.status == 'live' else '' }}>Live Now</option>
+            <option value="completed" {{ 'selected' if tournament.status == 'completed' else '' }}>Completed</option>
+            <option value="closed" {{ 'selected' if tournament.status == 'closed' else '' }}>Closed</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Tournament Type:</label>
+          <select name="tournament_type" class="form-select">
+            <option value="squad" {{ 'selected' if tournament.tournament_type == 'squad' else '' }}>Squad</option>
+            <option value="duo" {{ 'selected' if tournament.tournament_type == 'duo' else '' }}>Duo</option>
+            <option value="solo" {{ 'selected' if tournament.tournament_type == 'solo' else '' }}>Solo</option>
+            <option value="clash_squad" {{ 'selected' if tournament.tournament_type == 'clash_squad' else '' }}>Clash Squad</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Game Mode:</label>
+          <select name="game_mode" class="form-select">
+            {% for m in modes %}
+              <option value="{{ m }}" {{ 'selected' if tournament.game_mode == m else '' }}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Map:</label>
+          <select name="map_name" class="form-select">
+            {% for mp in maps %}
+              <option value="{{ mp }}" {{ 'selected' if tournament.map_name == mp else '' }}>{{ mp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" style="font-weight: 800; color: var(--accent-purple-light);">Max Slots / Teams:</label>
+          <input type="number" name="max_teams" class="form-control" value="{{ tournament.max_teams }}" min="2" max="1000" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" style="font-weight: 800; color: var(--accent-gold);">⚡ Entry Fee (Tokens / ₹):</label>
+          <input type="number" step="0.01" name="entry_fee" class="form-control" value="{{ tournament.entry_fee }}" min="0" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" style="font-weight: 800; color: var(--accent-success);">🏆 Prize Pool (₹):</label>
+          <input type="number" step="0.01" name="prize_pool" class="form-control" value="{{ tournament.prize_pool }}" min="0" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" style="font-weight: 800; color: var(--accent-cyan);">🎯 Per Kill Prize (₹):</label>
+          <input type="number" step="0.01" name="per_kill_prize" class="form-control" value="{{ tournament.per_kill_prize if tournament.per_kill_prize is not none else 5.0 }}" min="0" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Registration Deadline:</label>
+          <input type="datetime-local" name="registration_deadline" class="form-control" value="{{ tournament.registration_deadline.strftime('%Y-%m-%dT%H:%M') }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Tournament Start Time:</label>
+          <input type="datetime-local" name="start_time" class="form-control" value="{{ tournament.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">Update Banner Image:</label>
+          <input type="file" name="banner" class="form-control" accept="image/*">
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">Tournament Description:</label>
+          <textarea name="description" class="form-control" rows="3">{{ tournament.description or '' }}</textarea>
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">Custom Rules & Scoring Notice:</label>
+          <textarea name="rules" class="form-control" rows="3">{{ tournament.rules or '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-save"></i> Save Changes
+        </button>
+        <a href="{{ url_for('admin.manage_tournament', tournament_id=tournament.id) }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

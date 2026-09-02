@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard | Admin Control Center{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div style="font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding: 0 10px;">
+      <i class="fa-solid fa-shield-halved text-warning"></i> ADMIN MENU
+    </div>
+    <div class="admin-sidebar-nav">
+      <a href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge"></i> OVERVIEW</a>
+      <a href="{{ url_for('admin.create_tournament') }}"><i class="fa-solid fa-plus"></i> NEW TOURNAMENT</a>
+      <a href="{{ url_for('admin.list_tournaments') }}"><i class="fa-solid fa-trophy"></i> TOURNAMENTS</a>
+      <a href="{{ url_for('admin.list_payments', status='verification_required') }}"><i class="fa-solid fa-wallet"></i> PAYMENTS</a>
+      <a href="{{ url_for('admin.list_results', status='under_review') }}"><i class="fa-solid fa-check-to-slot"></i> VERIFY SCORES</a>
+      <a href="{{ url_for('admin.reports_hub') }}" class="active"><i class="fa-solid fa-chart-line"></i> ANALYTICS & REPORTS</a>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="margin-bottom: 24px;">
+      <h1 style="font-size: 2.2rem; font-weight: 800;"><i class="fa-solid fa-chart-line text-warning"></i> PLATFORM ANALYTICS DASHBOARD</h1>
+      <p class="section-sub">Real-time revenue metrics, player growth, tournament registrations, and dispute stats.</p>
+    </div>
+
+    <!-- Summary KPI Grid -->
+    <div class="grid grid-4" style="margin-bottom: 24px;">
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-purple-light);">{{ stats.total_players }}</div>
+        <div class="label">Total Players (+{{ stats.new_players_this_month }} this month)</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-gold);">{{ stats.total_tournaments }}</div>
+        <div class="label">Tournaments ({{ stats.live_tournaments }} Live)</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-success);">₹{{ '{:,.0f}'.format(stats.total_revenue) }}</div>
+        <div class="label">Total Revenue (₹{{ '{:,.0f}'.format(stats.revenue_this_month) }} this month)</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" style="color: var(--accent-cyan);">{{ stats.total_matches }}</div>
+        <div class="label">Matches Played</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+      <!-- Monthly Revenue Line Chart -->
+      <div class="card">
+        <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-chart-area text-neon-success"></i> Monthly Revenue (Last 6 Months)</h3>
+        <canvas id="revenueChart" height="120"></canvas>
+      </div>
+
+      <!-- Payment Status Doughnut Chart -->
+      <div class="card">
+        <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-chart-pie text-warning"></i> Payment Breakdown</h3>
+        <canvas id="paymentPieChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+      <!-- Registrations Per Month Bar Chart -->
+      <div class="card">
+        <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-chart-bar text-neon-primary"></i> Tournament Registrations</h3>
+        <canvas id="registrationChart" height="130"></canvas>
+      </div>
+
+      <!-- Disputes & Tickets Bar Chart -->
+      <div class="card">
+        <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-chart-column text-warning"></i> Disputes & Support Tickets</h3>
+        <canvas id="disputeChart" height="130"></canvas>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = 'Poppins';
+
+// Revenue Chart
+new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels: {{ revenue_labels | tojson }},
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: {{ revenue_data | tojson }},
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16,185,129,0.15)',
+      tension: 0.4, fill: true, pointBackgroundColor: '#10b981'
+    }]
+  },
+  options: { responsive: true, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
+});
+
+// Payment Pie
+new Chart(document.getElementById('paymentPieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Verified', 'Pending', 'Rejected'],
+    datasets: [{ data: [{{ stats.payments_verified }}, {{ stats.payments_pending }}, {{ stats.payments_rejected }}], backgroundColor: ['#10b981','#f59e0b','#ef4444'], borderWidth: 0 }]
+  },
+  options: { responsive: true, cutout: '70%' }
+});
+
+// Registration Chart
+new Chart(document.getElementById('registrationChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ reg_labels | tojson }},
+    datasets: [{
+      label: 'Registrations',
+      data: {{ reg_data | tojson }},
+      backgroundColor: 'rgba(139,92,246,0.6)',
+      borderColor: '#8b5cf6',
+      borderWidth: 1
+    }]
+  },
+  options: { responsive: true, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
+});
+
+// Dispute Chart
+new Chart(document.getElementById('disputeChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Open', 'Under Review', 'Resolved', 'Rejected'],
+    datasets: [{
+      label: 'Disputes',
+      data: {{ dispute_data | tojson }},
+      backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#64748b'],
+      borderWidth: 0
+    }]
+  },
+  options: { responsive: true, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
+});
+</script>
+{% endblock %}

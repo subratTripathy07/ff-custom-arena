@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Hero Banner -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">
+      <i class="fa-solid fa-fire text-neon-primary"></i> OFFICIAL FREE FIRE ESPORTS ARENA
+    </div>
+    <h1 class="hero-title">FF <span class="accent">CUSTOM</span> ARENA</h1>
+    <p class="hero-tagline">"PLAY. COMPETE. WIN."</p>
+
+    <div class="hero-actions">
+      <a href="{{ url_for('tournaments.list_tournaments') }}" class="btn btn-primary">
+        <i class="fa-solid fa-trophy"></i> JOIN TOURNAMENT
+      </a>
+      {% if current_user.is_authenticated %}
+      <a href="/my-matches" class="btn btn-secondary">
+        <i class="fa-solid fa-crosshairs text-neon-success"></i> MY BOOKED MATCHES
+      </a>
+      {% endif %}
+    </div>
+
+<!-- Announcements Slider -->
+{% if announcements %}
+<section class="section-tight">
+  <div class="container">
+    <h2 class="section-title" style="margin-bottom:20px;"><i class="fa-solid fa-bullhorn text-neon-primary"></i> ANNOUNCEMENTS</h2>
+    <div class="grid grid-3">
+      {% for a in announcements %}
+      <div class="card" style="border-left: 4px solid var(--accent-primary);">
+        <h3 style="font-size:1.05rem; font-weight:700;">{{ a.title }}</h3>
+        <p style="color:var(--text-secondary); font-size:0.88rem; margin-top:8px;">{{ a.message }}</p>
+        <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-clock"></i> {{ a.created_at.strftime('%d %b %Y') if a.created_at else 'Recent' }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Platform Features Section -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title" style="text-align:center; margin-bottom:40px;">WHY FF CUSTOM ARENA?</h2>
+    <div class="grid grid-4">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2.4rem; color:var(--accent-primary); margin-bottom:12px;"><i class="fa-solid fa-shield-halved"></i></div>
+        <h3 style="font-size:1rem; margin-top:8px;">VERIFIED RESULTS</h3>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Admin screenshot audit system ensures fair play and accurate scoring.</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2.4rem; color:var(--accent-cyan); margin-bottom:12px;"><i class="fa-solid fa-bolt"></i></div>
+        <h3 style="font-size:1rem; margin-top:8px;">AUTO ROOM RELEASE</h3>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Get instant live room ID & password as soon as release time is reached.</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2.4rem; color:var(--accent-gold); margin-bottom:12px;"><i class="fa-solid fa-wallet"></i></div>
+        <h3 style="font-size:1rem; margin-top:8px;">INSTANT WALLET</h3>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Secure wallet for fast deposits, entry fee payments, and prize withdrawals.</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2.4rem; color:var(--accent-purple-light); margin-bottom:12px;"><i class="fa-solid fa-mobile-screen-button"></i></div>
+        <h3 style="font-size:1rem; margin-top:8px;">MOBILE READY</h3>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Native mobile app interface with bottom navigation and real-time alerts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  {% if next_match %}
+  const targetDate = new Date("{{ next_match.scheduled_date }}T{{ next_match.scheduled_time }}");
+  function updateCountdown() {
+    const now = new Date();
+    let diff = Math.max(0, targetDate - now) / 1000;
+    const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+    const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+    const s = String(Math.floor(diff % 60)).padStart(2, '0');
+    const hEl = document.getElementById('cd-h');
+    const mEl = document.getElementById('cd-m');
+    const sEl = document.getElementById('cd-s');
+    if (hEl) hEl.textContent = h;
+    if (mEl) mEl.textContent = m;
+    if (sEl) sEl.textContent = s;
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+  {% endif %}
+</script>
+{% endblock %}

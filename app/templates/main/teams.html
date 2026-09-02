@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Squads & Teams Arena | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 60px;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="font-size: 2.2rem; font-weight: 800;"><i class="fa-solid fa-users text-neon-primary"></i> SQUADS & TEAMS ARENA</h1>
+      <p class="section-sub">Build your Free Fire esports roster or manage your squad.</p>
+    </div>
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('teams.create_team') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> CREATE SQUAD
+    </a>
+    {% endif %}
+  </div>
+
+  {% if teams %}
+    <div class="grid grid-3">
+      {% for t in teams %}
+        <div class="card t-card card-glow-hover">
+          <div style="padding: 20px; text-align: center; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(6,182,212,0.1)); border-bottom: 1px solid var(--border-subtle);">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--accent-primary); color: #fff; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.3rem; box-shadow: 0 0 16px var(--accent-purple-glow);">
+              {{ t.tag or t.name[0]|upper }}
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 4px;">{{ t.name }}</h3>
+            <span class="badge badge-upcoming">TAG: {{ t.tag or 'N/A' }}</span>
+          </div>
+
+          <div style="padding: 16px;">
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+              <i class="fa-solid fa-crown text-warning"></i> Captain: <strong>@{{ t.captain.username if t.captain else 'N/A' }}</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="badge badge-open"><i class="fa-solid fa-user-group"></i> {{ t.members.count() }} / 5 Members</span>
+              {% if current_user.is_authenticated and t.captain_id == current_user.id %}
+                <a href="{{ url_for('teams.manage_team', team_id=t.id) }}" class="btn btn-secondary btn-sm">MANAGE</a>
+              {% else %}
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Public Squad</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state card">
+      <div class="icon"><i class="fa-solid fa-users-slash"></i></div>
+      <h3>NO TEAMS FOUND</h3>
+      <p>No squads registered yet. Create your team to compete in custom matches!</p>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('teams.create_team') }}" class="btn btn-primary btn-sm" style="margin-top: 12px;">CREATE TEAM NOW</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

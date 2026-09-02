@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payment Receipt #{{ payment.id }} | {{ site_name }}</title>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 40px;
+      margin: 0;
+    }
+    .receipt-card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .receipt-header {
+      text-align: center;
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+    .receipt-header h1 {
+      margin: 0;
+      color: #ff5722;
+      font-size: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .receipt-label {
+      color: #8b949e;
+      font-size: 14px;
+    }
+    .receipt-val {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .badge-success {
+      background: #238636;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+    .total-row {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 2px solid #30363d;
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      font-weight: bold;
+      color: #58a6ff;
+    }
+    .btn-print {
+      display: block;
+      width: 100%;
+      background: #ff5722;
+      color: white;
+      text-align: center;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 24px;
+    }
+    @media print {
+      .btn-print { display: none; }
+      body { background: white; color: black; }
+      .receipt-card { border: 1px solid #ddd; box-shadow: none; background: white; color: black; }
+      .receipt-label { color: #555; }
+    }
+  </style>
+</head>
+<body>
+  <div class="receipt-card">
+    <div class="receipt-header">
+      <h1>🔥 {{ site_name }}</h1>
+      <p style="color: #8b949e; margin-top: 5px;">Official Tournament Entry Receipt</p>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Receipt Number:</span>
+      <span class="receipt-val">REC-{{ payment.id }}-{{ payment.created_at.strftime('%Y%m%d') if payment.created_at else '000' }}</span>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Tournament:</span>
+      <span class="receipt-val">{{ payment.registration.tournament.name }}</span>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Team:</span>
+      <span class="receipt-val">{{ payment.registration.team.name }}</span>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Registration Code:</span>
+      <span class="receipt-val">{{ payment.registration.registration_code }}</span>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Payment Method:</span>
+      <span class="receipt-val">{{ payment.payment_method or 'UPI' }}</span>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Transaction ID / Ref:</span>
+      <span class="receipt-val">{{ payment.transaction_id or 'Verified Manual' }}</span>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Payment Date:</span>
+      <span class="receipt-val">{{ payment.created_at.strftime('%d %B %Y, %I:%M %p') if payment.created_at else '' }}</span>
+    </div>
+
+    <div class="receipt-row">
+      <span class="receipt-label">Status:</span>
+      <span class="receipt-val"><span class="badge-success" style="background: #10b981; font-weight: 800; padding: 6px 14px; font-size: 13px;">PAYMENT DONE ✓</span></span>
+    </div>
+
+    <div class="total-row">
+      <span>Total Paid:</span>
+      <span>₹{{ payment.amount }}</span>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
+  </div>
+</body>
+</html>

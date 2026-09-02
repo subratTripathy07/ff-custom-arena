@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Achievements Trophy Room | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 60px;">
+  
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="font-weight: 900;"><i class="fa-solid fa-trophy text-warning"></i> ACHIEVEMENTS TROPHY ROOM</h1>
+    <p class="section-sub">Compete in matches, achieve milestones, and unlock exclusive gaming badges for your profile.</p>
+  </div>
+
+  <div class="grid grid-3">
+    {% for ach in achievements %}
+      {% set is_unlocked = ach.id in unlocked_ids %}
+      <div class="achievement-card {{ 'unlocked' if is_unlocked else 'locked' }}">
+        <div class="achievement-icon">{{ ach.icon }}</div>
+        <div>
+          <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 4px;">{{ ach.title }}</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">{{ ach.description }}</p>
+          {% if is_unlocked %}
+            <span class="badge badge-open"><i class="fa-solid fa-circle-check"></i> UNLOCKED</span>
+          {% else %}
+            <span class="badge badge-upcoming"><i class="fa-solid fa-lock"></i> LOCKED</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

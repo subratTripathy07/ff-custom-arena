@@ -1,0 +1,324 @@
+/* =========================================================
+   🔥 FF CUSTOM ARENA — ULTRA PREMIUM CYBERPUNK ESPORTS DESIGN SYSTEM
+   Theme: High-Tech Dark Cyber Purple / Neon Cyan / Gold Accents
+   Font: Poppins & JetBrains Mono
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* ---- Dark Purple / Cyber Esports Tokens ---- */
+  --bg-base: #07060f;          /* Deep Night Base */
+  --bg-elevated: #0d0b1a;      /* Section Base */
+  --bg-card: rgba(20, 16, 36, 0.75); /* Glass Card */
+  --bg-card-solid: #151126;    /* Solid Card */
+  --bg-card-hover: #1e1836;    /* Hover State */
+
+  --border-subtle: rgba(139, 92, 246, 0.22);
+  --border-strong: rgba(168, 85, 247, 0.55);
+  --border-glow: rgba(139, 92, 246, 0.7);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #c4b5fd;
+  --text-muted: #8b85b1;
+
+  /* ---- Accent Colors ---- */
+  --accent-primary: #8b5cf6;       /* Neon Violet */
+  --accent-primary-hover: #7c3aed;
+  --accent-purple-light: #a855f7;
+  --accent-purple-glow: rgba(139, 92, 246, 0.5);
+
+  --accent-cyan: #06b6d4;         /* Cyber Teal/Cyan */
+  --accent-cyan-glow: rgba(6, 182, 212, 0.4);
+
+  --accent-flame: #ff4b5c;        /* Hot Flame Red */
+  --accent-flame-glow: rgba(255, 75, 92, 0.4);
+
+  --accent-gold: #fbbf24;         /* Rank 1 / Prize Gold */
+  --accent-silver: #e2e8f0;       /* Rank 2 */
+  --accent-bronze: #d97706;       /* Rank 3 */
+
+  --accent-success: #10b981;
+  --accent-warning: #f59e0b;
+  --accent-danger: #ef4444;
+
+  /* ---- Gradients ---- */
+  --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #06b6d4 100%);
+  --gradient-flame: linear-gradient(135deg, #ff4b5c 0%, #f59e0b 100%);
+  --gradient-card: linear-gradient(160deg, rgba(139, 92, 246, 0.12) 0%, rgba(13, 11, 26, 0.85) 100%);
+  --gradient-hero: radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.32), transparent 45%),
+                    radial-gradient(circle at 90% 20%, rgba(6, 182, 212, 0.25), transparent 45%),
+                    radial-gradient(circle at 50% 90%, rgba(255, 75, 92, 0.18), transparent 50%);
+
+  /* ---- Radius & Shadow ---- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 12px 36px rgba(0, 0, 0, 0.6);
+  --shadow-glow-purple: 0 0 28px var(--accent-purple-glow);
+  --shadow-glow-cyan: 0 0 28px var(--accent-cyan-glow);
+  --shadow-glow-flame: 0 0 28px var(--accent-flame-glow);
+
+  /* ---- Typography ---- */
+  --font-body: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Poppins', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--gradient-hero);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle Cyber Mesh Background Pattern */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+main { flex: 1; position: relative; z-index: 1; }
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  margin: 0 0 0.4em;
+}
+
+h1 { font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1.08; font-weight: 900; }
+h2 { font-size: clamp(1.5rem, 3vw, 2.3rem); font-weight: 800; }
+h3 { font-size: 1.25rem; font-weight: 700; }
+p { color: var(--text-secondary); margin: 0 0 1em; }
+a { color: inherit; text-decoration: none; transition: all 0.2s ease; }
+.mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
+
+/* Custom Gaming Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: #2a224a; border-radius: 4px; border: 1px solid var(--border-subtle); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
+
+/* Layout Grid */
+.container { width: 100%; max-width: 1260px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+.section { padding: 70px 0; }
+.section-tight { padding: 40px 0; }
+
+.section-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 30px; flex-wrap: wrap; gap: 16px;
+}
+.section-title { font-size: clamp(1.4rem, 2.5vw, 2rem); margin: 0; }
+.section-sub { font-size: 0.9rem; color: var(--text-muted); margin: 4px 0 0; }
+
+.grid { display: grid; gap: 20px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 992px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .section { padding: 45px 0; }
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+}
+
+/* Modern Glassmorphism Cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.card:hover, .card-glow-hover:hover {
+  transform: translateY(-5px) scale(1.008);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card), var(--shadow-glow-purple);
+}
+
+.card-solid {
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+/* Progress Bar (Tournament Squad Capacity) */
+.progress-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin: 10px 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 10px var(--accent-primary-hover);
+}
+
+/* Premium Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 24px; border-radius: var(--radius-pill);
+  font-family: var(--font-display); font-weight: 700; font-size: 0.88rem;
+  letter-spacing: 0.03em; text-transform: uppercase;
+  border: 1px solid transparent; cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); white-space: nowrap;
+  position: relative; overflow: hidden;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--gradient-primary); color: #ffffff;
+  box-shadow: var(--shadow-glow-purple);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 32px rgba(168, 85, 247, 0.7);
+  filter: brightness(1.12);
+}
+
+.btn-flame {
+  background: var(--gradient-flame); color: #ffffff;
+  box-shadow: var(--shadow-glow-flame);
+}
+.btn-flame:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 32px rgba(255, 75, 92, 0.7);
+  filter: brightness(1.12);
+}
+
+.btn-secondary {
+  background: rgba(139, 92, 246, 0.14); color: var(--text-primary);
+  border-color: var(--border-subtle);
+  backdrop-filter: blur(10px);
+}
+.btn-secondary:hover {
+  background: rgba(139, 92, 246, 0.28);
+  border-color: var(--border-strong);
+  color: #fff;
+  box-shadow: 0 0 20px var(--accent-purple-glow);
+}
+
+.btn-ghost { background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { color: var(--text-primary); background: rgba(255,255,255,0.08); }
+.btn-danger { background: var(--accent-danger); color: #fff; box-shadow: 0 0 16px rgba(239, 68, 68, 0.3); }
+.btn-success { background: var(--accent-success); color: #fff; box-shadow: 0 0 16px rgba(16, 185, 129, 0.3); }
+.btn-warning { background: var(--accent-warning); color: #000; font-weight: 800; }
+.btn-sm { padding: 8px 16px; font-size: 0.78rem; }
+.btn-block { width: 100%; }
+
+/* Status Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 13px; border-radius: var(--radius-pill);
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge-live { background: rgba(239, 68, 68, 0.2); color: var(--accent-flame); border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 0 12px rgba(239, 68, 68, 0.3); }
+.badge-live::before { animation: pulse-live 1.2s infinite; }
+.badge-open { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.4); }
+.badge-upcoming { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.4); }
+.badge-closing { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+.badge-completed, .badge-closed { background: rgba(139, 133, 177, 0.18); color: var(--text-muted); border: 1px solid rgba(139, 133, 177, 0.25); }
+
+@keyframes pulse-live { 0%,100%{ opacity: 1; transform: scale(1); } 50%{ opacity: 0.3; transform: scale(1.35); } }
+
+/* Forms & Inputs */
+.form-group { margin-bottom: 18px; }
+.form-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.form-control {
+  width: 100%; padding: 12px 16px; border-radius: var(--radius-sm);
+  background: var(--bg-elevated); border: 1px solid var(--border-subtle); color: var(--text-primary);
+  font-family: var(--font-body); font-size: 0.9rem; transition: all 0.2s ease;
+}
+.form-control:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-purple-glow); }
+
+/* Cyberpunk Monospace Credential Box */
+.credential-box {
+  background: #05040a; border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm); padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  box-shadow: inset 0 0 20px rgba(6, 182, 212, 0.06);
+}
+.credential-val { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.06em; }
+
+/* Sticky Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+  background: rgba(7, 6, 15, 0.94);
+  backdrop-filter: blur(24px) saturate(200%);
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav { display: flex; justify-content: space-around; align-items: center; }
+  body { padding-bottom: 74px; }
+}
+
+.mobile-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  color: var(--text-muted); font-size: 0.66rem; font-weight: 700; padding: 4px 10px;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+.mobile-nav-item i { font-size: 1.2rem; }
+.mobile-nav-item.active, .mobile-nav-item:hover { color: var(--accent-primary); transform: translateY(-1px); }
+
+/* Toast Notifications */
+.toast-stack { position: fixed; top: 80px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+  min-width: 290px; max-width: 380px; padding: 14px 18px; border-radius: var(--radius-md);
+  background: var(--bg-card-solid); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-card);
+  display: flex; align-items: center; gap: 12px; font-size: 0.88rem; animation: toast-slide 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes toast-slide { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.toast.success { border-left: 4px solid var(--accent-success); }
+.toast.danger { border-left: 4px solid var(--accent-danger); }
+.toast.warning { border-left: 4px solid var(--accent-warning); }
+.toast.info { border-left: 4px solid var(--accent-cyan); }
+

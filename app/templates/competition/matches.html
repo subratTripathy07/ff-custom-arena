@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Match Center | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-crosshairs text-neon-primary"></i> Match Center</h1>
+      <p class="page-subtitle">Live room accesses, schedules, and active custom tournament matches.</p>
+    </div>
+    
+    <!-- Filter Pills -->
+    <div class="filter-pills d-flex flex-wrap gap-2">
+      <a href="{{ url_for('competition.matches') }}" class="btn btn-sm {{ 'btn-primary' if not status else 'btn-secondary' }}">All</a>
+      <a href="{{ url_for('competition.matches', status='live') }}" class="btn btn-sm {{ 'btn-danger' if status == 'live' else 'btn-secondary' }}">🔴 Live</a>
+      <a href="{{ url_for('competition.matches', status='room_released') }}" class="btn btn-sm {{ 'btn-success' if status == 'room_released' else 'btn-secondary' }}">🔑 Room Released</a>
+      <a href="{{ url_for('competition.matches', status='scheduled') }}" class="btn btn-sm {{ 'btn-primary' if status == 'scheduled' else 'btn-secondary' }}">Upcoming</a>
+      <a href="{{ url_for('competition.matches', status='completed') }}" class="btn btn-sm {{ 'btn-secondary' if status == 'completed' else 'btn-secondary' }}">Completed</a>
+    </div>
+  </div>
+
+  {% if matches.items %}
+    <div class="grid grid-3">
+      {% for match in matches.items %}
+        <div class="card t-card card-glow-hover">
+          <div class="t-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge badge-accent">Round {{ match.round_number }}</span>
+              <span class="badge badge-{{ 'danger' if match.status == 'live' else 'success' if match.status in ['completed', 'room_released'] else 'warning' if match.status.startswith('room') else 'primary' }}">
+                {{ match.status.replace('_', ' ').title() }}
+              </span>
+            </div>
+
+            <h3 class="t-title mb-1">
+              <a href="{{ url_for('competition.match_detail', match_id=match.id) }}" class="text-white">
+                {{ match.tournament.name }}
+              </a>
+            </h3>
+            <p class="text-neon-primary font-bold mb-2">Match #{{ match.match_number }}</p>
+
+            <div class="t-meta-grid mb-3">
+              <div class="meta-item">
+                <span class="meta-label">Map</span>
+                <span class="meta-val">{{ match.map_name or match.tournament.map_name or 'Bermuda' }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Teams</span>
+                <span class="meta-val">{{ match.match_teams.count() }} Slotted</span>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-dark">
+              <small class="text-muted">
+                <i class="fa-regular fa-clock"></i> {{ match.scheduled_date.strftime('%d %b') }} {{ match.scheduled_time.strftime('%I:%M %p') }}
+              </small>
+              <a href="{{ url_for('competition.match_detail', match_id=match.id) }}" class="btn btn-secondary btn-sm">
+                Enter Room <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if matches.pages > 1 %}
+      <div class="pagination-wrapper mt-4 d-flex justify-content-center gap-2">
+        {% if matches.has_prev %}
+          <a href="{{ url_for('competition.matches', page=matches.prev_num, status=status) }}" class="btn btn-secondary btn-sm">
+            &laquo; Previous
+          </a>
+        {% endif %}
+        <span class="btn btn-ghost btn-sm disabled">Page {{ matches.page }} of {{ matches.pages }}</span>
+        {% if matches.has_next %}
+          <a href="{{ url_for('competition.matches', page=matches.next_num, status=status) }}" class="btn btn-secondary btn-sm">
+            Next &raquo;
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state glass-panel p-5 text-center">
+      <i class="fa-solid fa-crosshairs fa-3x text-muted mb-3"></i>
+      <h3>No Matches Found</h3>
+      <p class="text-muted">There are currently no matches scheduled matching this filter.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Match #{{ match.match_number }} | {{ match.tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 60px;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <a href="{{ url_for('tournaments.detail', slug=match.tournament.slug) }}" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-arrow-left"></i> TOURNAMENTS
+    </a>
+    <span class="badge badge-{{ 'live' if match.status == 'live' else 'completed' if match.status == 'completed' else 'upcoming' }}" style="padding: 6px 16px; font-size: 0.82rem;">
+      <i class="fa-solid fa-signal"></i> {{ match.status.replace('_', ' ')|upper }}
+    </span>
+  </div>
+
+  <!-- Match Header Banner -->
+  <div class="card" style="margin-bottom: 24px; padding: 24px;">
+    <div class="grid grid-2" style="grid-template-columns: 2fr 1fr; align-items: center;">
+      <div>
+        <span class="badge badge-upcoming" style="margin-bottom: 8px;">ROUND {{ match.round_number }}</span>
+        <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 6px;">{{ match.tournament.name }} — MATCH #{{ match.match_number }}</h1>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+          <i class="fa-solid fa-map-location-dot text-neon-primary"></i> Map: <strong>{{ match.map_name or match.tournament.map_name or 'Bermuda' }}</strong>
+          &nbsp;|&nbsp;
+          <i class="fa-solid fa-calendar-days text-neon-primary"></i> Schedule: <strong>{{ match.scheduled_date.strftime('%d %b %Y') }} at {{ match.scheduled_time.strftime('%I:%M %p') }}</strong>
+        </p>
+      </div>
+
+      {% if current_user.is_admin() %}
+      <div style="text-align: right;">
+        <form method="POST" action="{{ url_for('competition.change_match_status', match_id=match.id) }}" style="display:inline-block;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="status" value="live">
+          <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-play"></i> SET LIVE</button>
+        </form>
+        <form method="POST" action="{{ url_for('competition.change_match_status', match_id=match.id) }}" style="display:inline-block; margin-left: 6px;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="status" value="completed">
+          <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-check"></i> SET COMPLETED</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+    
+    <!-- Left Column: ROOM Credentials -->
+    <div>
+      <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-key text-warning"></i> CUSTOM ROOM ACCESS</h3>
+        
+        {% if match.room %}
+          {% set is_released = match.room.release_time <= now %}
+          {% if is_released and room_data %}
+            <div style="padding: 18px; background: rgba(6,5,11,0.9); border: 1px solid var(--accent-success); border-radius: var(--radius-md);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <span class="badge badge-open"><i class="fa-solid fa-lock-open"></i> ROOM AVAILABLE</span>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Enter Custom Room in Free Fire</span>
+              </div>
+
+              <!-- ROOM ID -->
+              <div class="form-group">
+                <label class="form-label">ROOM ID</label>
+                <div class="credential-box">
+                  <span class="credential-val" id="roomIdVal">{{ room_data.room_id }}</span>
+                  <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('{{ room_data.room_id }}', 'Room ID')">
+                    <i class="fa-solid fa-copy"></i> COPY
+                  </button>
+                </div>
+              </div>
+
+              <!-- PASSWORD -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">PASSWORD</label>
+                <div class="credential-box">
+                  <span class="credential-val" id="roomPassVal">{{ room_data.password }}</span>
+                  <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('{{ room_data.password }}', 'Password')">
+                    <i class="fa-solid fa-copy"></i> COPY
+                  </button>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div style="padding: 24px; background: rgba(6,5,11,0.9); border: 1px solid var(--border-strong); border-radius: var(--radius-md); text-align: center;">
+              <i class="fa-solid fa-lock" style="font-size: 2.4rem; color: var(--accent-warning); margin-bottom: 10px;"></i>
+              <h4 style="color: var(--accent-warning); margin-bottom: 6px;">ROOM LOCKED</h4>
+              <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
+                Room credentials will auto-release at: <br>
+                <strong>{{ match.room.release_time.strftime('%d %b %Y, %I:%M %p') }}</strong>
+              </p>
+
+              <div data-countdown="{{ match.room.release_time.isoformat() }}">
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block;">Room Available In:</span>
+                <div class="countdown-timer mono" style="font-size: 1.4rem; font-weight: 700; color: var(--accent-cyan);">
+                  Calculating...
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="empty-state">
+            <i class="fa-solid fa-calendar-xmark" style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 8px;"></i>
+            <p>Room credentials have not been scheduled yet.</p>
+          </div>
+        {% endif %}
+
+        <!-- Admin Room Setting Form -->
+        {% if current_user.is_admin() %}
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+            <h4 style="color: var(--accent-gold); font-size: 0.95rem; margin-bottom: 10px;"><i class="fa-solid fa-wrench"></i> Set Room Credentials</h4>
+            <form method="POST" action="{{ url_for('competition.set_room', match_id=match.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="grid grid-2" style="gap: 10px; margin-bottom: 10px;">
+                <input type="text" name="room_id" class="form-control" placeholder="Room ID" value="{{ match.room.room_id_code if match.room else '' }}" required>
+                <input type="text" name="room_password" class="form-control" placeholder="Password" value="{{ match.room.room_password if match.room else '' }}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Release Time:</label>
+                <input type="datetime-local" name="release_time" class="form-control" value="{{ match.room.release_time.strftime('%Y-%m-%dT%H:%M') if match.room else '' }}" required>
+              </div>
+              <button type="submit" class="btn btn-warning btn-sm btn-block">SAVE ROOM CREDENTIALS</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Slotted Teams -->
+      <div class="card">
+        <h3 style="margin-bottom: 14px;"><i class="fa-solid fa-users text-neon-primary"></i> SLOTTED TEAMS</h3>
+        {% for slot in match.match_teams %}
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-card-solid); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 8px;">
+            <div>
+              <span class="badge badge-upcoming">Slot #{{ slot.slot_number or loop.index }}</span>
+              <strong style="margin-left: 8px;">{{ slot.team.name }}</strong>
+            </div>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Captain: @{{ slot.team.captain.username if slot.team.captain else 'N/A' }}</span>
+          </div>
+        {% else %}
+          <p style="font-size: 0.85rem; color: var(--text-muted);">No teams slotted yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right Column: Results & Result Submission -->
+    <div>
+      <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 14px;"><i class="fa-solid fa-trophy text-warning"></i> MATCH SCORES</h3>
+        {% if results %}
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>PLACE</th>
+                <th>TEAM</th>
+                <th>KILLS</th>
+                <th>POINTS</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for res in results %}
+                <tr>
+                  <td><span class="badge badge-open">#{{ res.placement }}</span></td>
+                  <td><strong>{{ res.team.name }}</strong></td>
+                  <td><i class="fa-solid fa-skull"></i> {{ res.kills }}</td>
+                  <td><strong style="color: var(--accent-purple-light);">{{ res.total_points }} pts</strong></td>
+                  <td>
+                    {% if res.status == 'verified' %}
+                      <span class="badge badge-open"><i class="fa-solid fa-check"></i> VERIFIED</span>
+                    {% else %}
+                      <span class="badge badge-closing"><i class="fa-solid fa-clock"></i> {{ res.status|upper }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p style="font-size: 0.88rem; color: var(--text-muted); text-align: center; padding: 20px 0;">No verified results submitted yet for this match.</p>
+        {% endif %}
+      </div>
+
+      <!-- Result Submission Form -->
+      {% if my_captained_team or current_user.is_admin() %}
+        <div class="card" style="margin-bottom: 24px;">
+          <h3 style="margin-bottom: 10px;"><i class="fa-solid fa-upload text-neon-success"></i> SUBMIT MATCH SCOREBOARD</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">Upload end-game screenshot proof along with placement and total kills.</p>
+
+          <form method="POST" action="{{ url_for('competition.submit_team_result', match_id=match.id) }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            {% if my_captained_team %}
+              <input type="hidden" name="team_id" value="{{ my_captained_team.id }}">
+              <div style="padding: 8px 12px; background: rgba(139,92,246,0.12); border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 0.84rem;">
+                Submitting as Captain of: <strong>{{ my_captained_team.name }}</strong>
+              </div>
+            {% elif current_user.is_admin() %}
+              <div class="form-group">
+                <label class="form-label">Select Team:</label>
+                <select name="team_id" class="form-control" required>
+                  {% for slot in match.match_teams %}
+                    <option value="{{ slot.team.id }}">{{ slot.team.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            {% endif %}
+
+            <div class="grid grid-2" style="gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Placement (#1 - #12):</label>
+                <input type="number" name="placement" class="form-control" min="1" max="12" placeholder="e.g. 1" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Total Squad Kills:</label>
+                <input type="number" name="kills" class="form-control" min="0" placeholder="e.g. 8" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Screenshot Proof:</label>
+              <input type="file" name="proof" class="form-control" accept="image/*" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">SUBMIT RESULT FOR VERIFICATION</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

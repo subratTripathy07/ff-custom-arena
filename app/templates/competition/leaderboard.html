@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard — {{ tournament.name }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <a href="{{ url_for('tournaments.detail', slug=tournament.slug) }}" class="btn btn-secondary btn-sm mb-2">
+        <i class="fa-solid fa-arrow-left"></i> Back to Tournament
+      </a>
+      <h1 class="page-title"><i class="fa-solid fa-trophy text-neon-warning"></i> {{ tournament.name }} Standings</h1>
+    </div>
+
+    <!-- Round Filter -->
+    <div class="round-filter-box d-flex align-items-center gap-2">
+      <span class="text-muted small">Filter:</span>
+      <div class="btn-group">
+        <a href="{{ url_for('competition.leaderboard', tournament_id=tournament.id) }}" class="btn btn-sm {{ 'btn-primary' if not round_filter else 'btn-secondary' }}">
+          Overall
+        </a>
+        {% for r in available_rounds %}
+          <a href="{{ url_for('competition.leaderboard', tournament_id=tournament.id, round=r) }}" class="btn btn-sm {{ 'btn-primary' if round_filter == r else 'btn-secondary' }}">
+            Round {{ r }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="glass-panel p-4">
+    <div class="table-responsive">
+      <table class="table custom-table leaderboard-table">
+        <thead>
+          <tr>
+            <th style="width: 80px;">Rank</th>
+            <th>Team Name</th>
+            <th>Matches</th>
+            <th>Wins (Booyah)</th>
+            <th>Total Kills</th>
+            <th>Placement Pts</th>
+            <th>Kill Pts</th>
+            <th>Total Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in board %}
+            <tr class="{{ 'rank-top-1' if row.rank == 1 else 'rank-top-2' if row.rank == 2 else 'rank-top-3' if row.rank == 3 else '' }}">
+              <td>
+                {% if row.rank == 1 %}
+                  <span class="medal-badge medal-gold">👑 #1</span>
+                {% elif row.rank == 2 %}
+                  <span class="medal-badge medal-silver">🥈 #2</span>
+                {% elif row.rank == 3 %}
+                  <span class="medal-badge medal-bronze">🥉 #3</span>
+                {% else %}
+                  <span class="rank-num">#{{ row.rank }}</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ row.team.name }}</strong></td>
+              <td>{{ row.matches }}</td>
+              <td class="text-neon-success font-bold">{{ row.wins }}</td>
+              <td class="text-neon-warning font-bold"><i class="fa-solid fa-skull"></i> {{ row.kills }}</td>
+              <td>{{ row.placement_points }}</td>
+              <td>{{ row.kill_points }}</td>
+              <td><strong class="text-neon-primary fs-5">{{ row.total_points }} pts</strong></td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-chart-column fa-2x mb-2 d-block"></i>
+                No verified scores found for this filter.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

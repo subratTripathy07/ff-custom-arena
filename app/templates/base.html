@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ site_name }} — Play. Compete. Win.{% endblock %}</title>
+  <meta name="description" content="Premier Free Fire Esports & Custom Tournament Arena.">
+
+  <!-- Google Fonts: Poppins & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  
+  <!-- Design System & Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% include "partials/navbar.html" %}
+
+  <div class="toast-stack" id="toastStack">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="toast toast-{{ category }}">
+          <i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-circle-exclamation' if category in ['danger','warning'] else 'fa-circle-info' }}"></i>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/footer.html" %}
+
+  <!-- Mobile Bottom Navigation Bar (HOME, TOURNAMENTS, MATCHES, NOTIFICATIONS, PROFILE) -->
+  <div class="mobile-bottom-nav">
+    <a href="{{ url_for('main.home') }}" class="mobile-nav-item {{ 'active' if request.endpoint == 'main.home' }}">
+      <i class="fa-solid fa-house"></i>
+      <span>HOME</span>
+    </a>
+    <a href="{{ url_for('tournaments.list_tournaments') }}" class="mobile-nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('tournaments.') }}">
+      <i class="fa-solid fa-trophy"></i>
+      <span>TOURNAMENTS</span>
+    </a>
+    <a href="{{ url_for('competition.matches') }}" class="mobile-nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('competition.') }}">
+      <i class="fa-solid fa-crosshairs"></i>
+      <span>MATCHES</span>
+    </a>
+    <a href="{{ url_for('dashboard.index') }}" class="mobile-nav-item {{ 'active' if request.endpoint == 'dashboard.index' }}">
+      <i class="fa-solid fa-bell"></i>
+      <span>NOTIFS</span>
+    </a>
+    <a href="{{ url_for('player.my_profile') if current_user.is_authenticated else url_for('auth.login') }}" class="mobile-nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('player.') }}">
+      <i class="fa-solid fa-user"></i>
+      <span>PROFILE</span>
+    </a>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

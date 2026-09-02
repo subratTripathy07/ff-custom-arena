@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Disputes Resolution Center | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-triangle-exclamation text-neon-danger"></i> Match Disputes Center</h1>
+      <p class="page-subtitle">Review player reported incidents, inspect evidence, and enforce rulings.</p>
+    </div>
+    <a href="{{ url_for('admin.download_report', entity='disputes') }}" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-download"></i> Export Disputes CSV
+    </a>
+  </div>
+
+  <div class="glass-panel p-4">
+    {% if disputes %}
+      <div class="table-responsive">
+        <table class="table custom-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Match / Tournament</th>
+              <th>Team & Player</th>
+              <th>Reason & Description</th>
+              <th>Proof</th>
+              <th>Status</th>
+              <th>Resolution Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in disputes %}
+              <tr>
+                <td>#{{ d.id }}</td>
+                <td>
+                  <strong>{{ d.match.tournament.name }}</strong>
+                  <br><small class="text-muted">Match #{{ d.match.match_number }}</small>
+                </td>
+                <td>
+                  <strong>{{ d.team.name }}</strong>
+                  <br><small class="text-muted">Raised by: @{{ d.team.captain.username if d.team and d.team.captain else 'N/A' }}</small>
+                </td>
+                <td>
+                  <strong class="text-warning">{{ d.reason }}</strong>
+                  <p class="small text-muted mb-0">{{ d.description or 'No extra notes provided.' }}</p>
+                </td>
+                <td>
+                  {% if d.proof_url %}
+                    <a href="{{ url_for('uploaded_file', filename=d.proof_url) }}" target="_blank" class="btn btn-secondary btn-sm py-0">
+                      <i class="fa-solid fa-image"></i> View Proof
+                    </a>
+                  {% else %}
+                    <span class="text-muted small">None</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-{{ 'danger' if d.status == 'open' else 'warning' if d.status == 'under_review' else 'success' if d.status in ['resolved','accepted'] else 'secondary' }} badge-sm">
+                    {{ d.status.replace('_', ' ').title() }}
+                  </span>
+                </td>
+                <td>
+                  {% if d.status in ['open', 'under_review'] %}
+                    <form method="POST" action="{{ url_for('admin.resolve_dispute', dispute_id=d.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div class="d-flex gap-1 flex-column">
+                        <input type="text" name="resolution_note" class="form-control form-control-sm py-0" placeholder="Resolution Note...">
+                        <div class="d-flex gap-1">
+                          <button type="submit" name="status" value="resolved" class="btn btn-success btn-sm py-0 flex-grow-1">Resolve</button>
+                          <button type="submit" name="status" value="rejected" class="btn btn-danger btn-sm py-0 flex-grow-1">Reject</button>
+                        </div>
+                      </div>
+                    </form>
+                  {% else %}
+                    <small class="text-muted">{{ d.resolution_note or 'Resolved' }}</small>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state py-5 text-center">
+        <i class="fa-solid fa-shield-halved fa-3x text-muted mb-3"></i>
+        <h3>No Active Disputes</h3>
+        <p class="text-muted">No match disputes have been submitted.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
