@@ -16,7 +16,8 @@ dependencies = [
     "cryptography",
     "python-dotenv",
     "requests",
-    "pillow"
+    "pillow",
+    "reportlab"
 ]
 
 [tool.vercel]
