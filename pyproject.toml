@@ -5,6 +5,7 @@ dependencies = [
     "flask",
     "python-dotenv",
     "flask-cors",
+    "flask-login",
     "requests"
 ]
 
