@@ -3,7 +3,9 @@ name = "ff-custom-arena"
 version = "0.1.0"
 dependencies = [
     "flask",
-    "python-dotenv"
+    "python-dotenv",
+    "flask-cors",
+    "requests"
 ]
 
 [tool.vercel]
