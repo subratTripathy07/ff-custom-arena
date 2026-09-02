@@ -9,6 +9,8 @@ dependencies = [
     "flask-wtf",
     "flask-limiter",
     "flask-socketio",
+    "python-socketio",
+    "python-engineio",
     "flask-cors",
     "pymysql",
     "cryptography",
