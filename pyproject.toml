@@ -13,7 +13,6 @@ dependencies = [
     "python-engineio",
     "flask-cors",
     "pymysql",
-    "psycopg2-binary",
     "cryptography",
     "python-dotenv",
     "requests"
