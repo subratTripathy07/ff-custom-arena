@@ -16,7 +16,7 @@ migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 limiter = Limiter(key_func=get_remote_address)
-socketio = SocketIO(cors_allowed_origins=[], async_mode="eventlet")
+socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
 
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
