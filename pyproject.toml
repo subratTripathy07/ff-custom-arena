@@ -10,6 +10,8 @@ dependencies = [
     "flask-limiter",
     "flask-socketio",
     "flask-cors",
+    "pymysql",
+    "cryptography",
     "python-dotenv",
     "requests"
 ]
