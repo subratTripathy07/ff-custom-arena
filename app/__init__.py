@@ -78,10 +78,11 @@ def create_app(config_name="development"):
     csrf.init_app(app)
     limiter.init_app(app)
 
-    try:
-        socketio.init_app(app)
-    except Exception:
-        pass
+    if not os.environ.get("VERCEL"):
+        try:
+            socketio.init_app(app)
+        except Exception:
+            pass
 
     _init_db_and_seed(app)
 
