@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>{% block title %}{{ site_name }} — Play. Compete. Win.{% endblock %}</title>
   <meta name="description" content="Premier Free Fire Esports & Custom Tournament Arena.">
 
@@ -15,8 +15,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   
   <!-- Design System & Custom CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}?v=2.1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=2.1">
   {% block extra_css %}{% endblock %}
 </head>
 <body>

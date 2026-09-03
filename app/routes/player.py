@@ -17,6 +17,8 @@ player_bp = Blueprint("player", __name__, template_folder="../templates")
 @player_bp.route("/my-matches")
 @login_required
 def my_matches():
+    from datetime import datetime, timedelta
+
     user_team_ids = [tm.team_id for tm in TeamMember.query.filter_by(user_id=current_user.id).all()]
     captain_team_ids = [t.id for t in Team.query.filter_by(captain_id=current_user.id).all()]
     all_team_ids = list(set(user_team_ids + captain_team_ids))
@@ -31,37 +33,58 @@ def my_matches():
         .all()
     )
 
-    booked_matches = []
+    active_matches = []
+    past_matches = []
     total_tokens_spent = 0.0
-    active_count = 0
+    now = datetime.utcnow()
 
     for reg in registrations:
         tournament = reg.tournament
         first_match = Match.query.filter_by(tournament_id=tournament.id).order_by(Match.scheduled_time.asc()).first()
         fee = float(tournament.entry_fee or 0)
         total_tokens_spent += fee
-        if reg.status == "confirmed" and tournament.status in ["registration_open", "ongoing"]:
-            active_count += 1
 
-        booked_matches.append({
+        # Compute match start time & expiration threshold (+10 mins after match start)
+        match_start_dt = None
+        if first_match and first_match.scheduled_date and first_match.scheduled_time:
+            match_start_dt = datetime.combine(first_match.scheduled_date, first_match.scheduled_time)
+        elif tournament.start_time:
+            match_start_dt = tournament.start_time
+
+        is_expired = False
+        if match_start_dt and now > (match_start_dt + timedelta(minutes=10)):
+            is_expired = True
+        elif tournament.status in ["completed", "closed"] or reg.status in ["cancelled", "rejected"]:
+            is_expired = True
+
+        match_item = {
             "registration": reg,
             "tournament": tournament,
             "team": reg.team,
             "match": first_match,
+            "match_start_dt": match_start_dt,
+            "is_expired": is_expired,
             "slot_number": reg.slot_number or "Auto",
             "registration_code": reg.registration_code,
             "in_game_name": reg.in_game_name or current_user.username,
             "status": reg.status,
             "entry_fee": fee,
             "created_at": reg.created_at
-        })
+        }
+
+        if is_expired:
+            past_matches.append(match_item)
+        else:
+            active_matches.append(match_item)
 
     return render_template(
         "main/my_matches.html",
-        booked_matches=booked_matches,
+        active_matches=active_matches,
+        past_matches=past_matches,
         total_tokens_spent=total_tokens_spent,
-        active_count=active_count
+        active_count=len(active_matches)
     )
+
 
 
 @player_bp.route("/profile", methods=["GET", "POST"])

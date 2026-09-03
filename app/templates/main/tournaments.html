@@ -3,36 +3,36 @@
 {% block title %}Battle Royale Arenas | {{ site_name }}{% endblock %}
 
 {% block content %}
-<!-- Mobile-First Esports Battle Royale Listing Page (Matching Screenshot 1) -->
-<div class="container" style="padding-top: 20px; padding-bottom: 60px; max-width: 768px; margin: 0 auto;">
+<!-- Mobile-First Esports Battle Royale Listing Page -->
+<div class="container" style="padding-top: 24px; padding-bottom: 60px;">
 
   <!-- Header Bar -->
-  <div style="display: flex; align-items: center; justify-content: space-between; background: #0c071e; padding: 14px 18px; border-radius: 14px; margin-bottom: 16px; border: 1px solid rgba(124,58,237,0.3);">
+  <div style="display: flex; align-items: center; justify-content: space-between; background: #0c071e; padding: 16px 24px; border-radius: 14px; margin-bottom: 24px; border: 1px solid rgba(124,58,237,0.3);">
     <div style="display: flex; align-items: center; gap: 12px;">
       <a href="/" style="color: #fff; font-size: 1.2rem; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i></a>
-      <h2 style="font-size: 1.35rem; font-weight: 900; margin: 0; color: #ffffff; letter-spacing: 0.5px;">Battle Royale</h2>
+      <h2 style="font-size: 1.35rem; font-weight: 900; margin: 0; color: #ffffff; letter-spacing: 0.5px;">Battle Royale Arenas</h2>
     </div>
-    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-weight: 800; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 6px;">
-      <span style="color: #fbbf24;">⚡</span> {{ current_user.wallet_balance|default(0.0)|float }}
+    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 6px;">
+      <span style="color: #fbbf24;">⚡</span> {{ current_user.wallet_balance|default(0.0)|float }} Tokens
     </div>
   </div>
 
   <!-- Category Tabs (ONGOING, UPCOMING, RESULTS) -->
-  <div style="display: flex; justify-content: space-around; background: #0e0a24; border-bottom: 2px solid rgba(255,255,255,0.1); margin-bottom: 20px; padding: 10px 0;">
-    <a href="{{ url_for('tournaments.list_tournaments', status='live') }}" style="color: {{ '#a78bfa' if status == 'live' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if status == 'live' else 'none' }};">
-      ONGOING
+  <div style="display: flex; justify-content: space-around; background: #0e0a24; border-bottom: 2px solid rgba(255,255,255,0.1); margin-bottom: 28px; padding: 12px 0; border-radius: 12px;">
+    <a href="{{ url_for('tournaments.list_tournaments', status='live') }}" style="color: {{ '#a78bfa' if status == 'live' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.95rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if status == 'live' else 'none' }};">
+      🔴 ONGOING
     </a>
-    <a href="{{ url_for('tournaments.list_tournaments', status='registration_open') }}" style="color: {{ '#a78bfa' if not status or status == 'registration_open' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if not status or status == 'registration_open' else 'none' }};">
-      UPCOMING
+    <a href="{{ url_for('tournaments.list_tournaments', status='registration_open') }}" style="color: {{ '#a78bfa' if not status or status == 'registration_open' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.95rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if not status or status == 'registration_open' else 'none' }};">
+      ⚔️ UPCOMING
     </a>
-    <a href="{{ url_for('tournaments.list_tournaments', status='completed') }}" style="color: {{ '#a78bfa' if status == 'completed' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if status == 'completed' else 'none' }};">
-      RESULTS
+    <a href="{{ url_for('tournaments.list_tournaments', status='completed') }}" style="color: {{ '#a78bfa' if status == 'completed' else '#94a3b8' }}; text-decoration: none; font-weight: 800; font-size: 0.95rem; letter-spacing: 1px; padding-bottom: 4px; border-bottom: {{ '2px solid #7c3aed' if status == 'completed' else 'none' }};">
+      🏆 RESULTS
     </a>
   </div>
 
-  <!-- Tournaments List -->
+  <!-- Tournaments List Grid -->
   {% if tournaments.items %}
-    <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="grid grid-2" style="gap: 24px;">
       {% for t in tournaments.items %}
         <div class="card" style="padding: 0; overflow: hidden; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); background: #ffffff; color: #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
           

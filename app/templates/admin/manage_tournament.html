@@ -175,7 +175,8 @@
                 <th>Team</th>
                 <th>Reg Code</th>
                 <th>Status</th>
-                <th>Payment / Action</th>
+                <th>Payment Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -205,12 +206,20 @@
                         </span>
                       {% endif %}
                     {% else %}
-                      <span class="text-muted small">Free Entry</span>
+                      <span class="text-muted small">Token Entry</span>
                     {% endif %}
+                  </td>
+                  <td>
+                    <form method="POST" action="{{ url_for('admin.delete_registration', reg_id=reg.id) }}" onsubmit="return confirm('Permanently remove team {{ reg.team.name }} from this tournament?');" style="margin: 0;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Delete Registration">
+                        <i class="fa-solid fa-trash"></i> DELETE
+                      </button>
+                    </form>
                   </td>
                 </tr>
               {% else %}
-                <tr><td colspan="4" class="text-muted text-center py-3">No teams registered yet.</td></tr>
+                <tr><td colspan="5" class="text-muted text-center py-3">No teams registered yet.</td></tr>
               {% endfor %}
             </tbody>
           </table>

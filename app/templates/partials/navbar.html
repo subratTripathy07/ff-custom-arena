@@ -5,23 +5,27 @@
       <span class="brand-name">FF CUSTOM ARENA</span>
     </a>
 
-    <!-- Desktop Navigation Links -->
-    <div class="nav-links">
-      <a href="{{ url_for('main.home') }}" class="{{ 'active' if request.endpoint == 'main.home' }}">
-        <i class="fa-solid fa-house"></i> Home
-      </a>
-      {% if current_user.is_authenticated %}
-        <a href="/my-matches" class="{{ 'active' if request.path == '/my-matches' }}">
-          <i class="fa-solid fa-crosshairs"></i> My Matches
-        </a>
-      {% endif %}
-      <a href="{{ url_for('tournaments.list_tournaments') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('tournaments.') }}">
-        <i class="fa-solid fa-trophy"></i> Tournaments
-      </a>
-      <a href="{{ url_for('support.tickets') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('support.') }}">
-        <i class="fa-solid fa-headset"></i> Support
-      </a>
-    </div>
+    <!-- Desktop Navigation Links (Only shown on non-auth pages) -->
+    {% if request.blueprint != 'auth' %}
+      <div class="nav-links-wrapper">
+        <div class="nav-links">
+          <a href="{{ url_for('main.home') }}" class="nav-item {{ 'active' if request.endpoint == 'main.home' }}">
+            <i class="fa-solid fa-house"></i> <span>Home</span>
+          </a>
+          {% if current_user.is_authenticated %}
+            <a href="/my-matches" class="nav-item {{ 'active' if request.path == '/my-matches' }}">
+              <i class="fa-solid fa-crosshairs"></i> <span>My Matches</span>
+            </a>
+          {% endif %}
+          <a href="{{ url_for('tournaments.list_tournaments') }}" class="nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('tournaments.') }}">
+            <i class="fa-solid fa-trophy"></i> <span>Tournaments</span>
+          </a>
+          <a href="{{ url_for('support.tickets') }}" class="nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('support.') }}">
+            <i class="fa-solid fa-headset"></i> <span>Support</span>
+          </a>
+        </div>
+      </div>
+    {% endif %}
 
     <!-- Right Actions -->
     <div class="nav-actions">
@@ -29,11 +33,19 @@
         <i class="fa-solid fa-moon"></i>
       </button>
 
+      {% if request.blueprint == 'auth' %}
+        <!-- Dedicated Cyber Support Button on Auth Pages -->
+        <a href="{{ url_for('support.tickets') }}" class="btn-nav-support-cyber" title="Get Help & Support">
+          <i class="fa-solid fa-headset"></i> <span>Support</span>
+        </a>
+      {% endif %}
+
       {% if current_user.is_authenticated %}
         <!-- Wallet Quick Pill -->
-        <a href="{{ url_for('payments.my_payments') }}" class="wallet-pill" title="My Token Balance">
-          <i class="fa-solid fa-bolt text-warning"></i>
-          <span style="color: #fbbf24; font-weight: 800; font-size: 0.88rem;">⚡ {{ "%.0f"|format(current_user.get_wallet().total_balance|default(0.0)|float) }} Tokens</span>
+        <a href="{{ url_for('payments.my_payments') }}" class="wallet-pill-cyber" title="My Token Balance">
+          <i class="fa-solid fa-bolt text-warning glow-pulse"></i>
+          <span class="token-val">⚡ {{ "%.0f"|format(current_user.get_wallet().total_balance|default(0.0)|float) }}</span>
+          <span class="token-lbl">Tokens</span>
         </a>
 
         <!-- Notification Bell -->
@@ -46,36 +58,44 @@
           </a>
         </div>
 
-        <!-- User Menu -->
+        <!-- User Profile Pill -->
         <div class="user-menu-wrapper">
-          <a href="{{ url_for('player.my_profile') }}" class="user-nav-btn">
-            <img src="{{ url_for('static', filename='img/' ~ current_user.avatar_url) if not current_user.avatar_url.startswith('avatars/') else url_for('uploaded_file', filename=current_user.avatar_url) }}" 
-                 alt="{{ current_user.username }}" 
-                 class="user-avatar-sm"
-                 onerror="this.src='{{ url_for('static', filename='img/default_avatar.png') }}'">
+          <a href="{{ url_for('player.my_profile') }}" class="user-nav-btn-cyber" title="View Profile">
+            <div class="avatar-wrap">
+              <img src="{{ url_for('static', filename='img/' ~ current_user.avatar_url) if not current_user.avatar_url.startswith('avatars/') else url_for('uploaded_file', filename=current_user.avatar_url) }}" 
+                   alt="{{ current_user.username }}" 
+                   class="user-avatar-sm"
+                   onerror="this.src='{{ url_for('static', filename='img/default_avatar.png') }}'">
+              <span class="status-dot-online"></span>
+            </div>
             <span class="user-name-text">@{{ current_user.username }}</span>
           </a>
         </div>
 
-        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary btn-sm d-none-mobile">
-          <i class="fa-solid fa-gauge"></i> Dashboard
+        <!-- Player Dashboard -->
+        <a href="{{ url_for('dashboard.index') }}" class="btn-nav-dashboard d-none-mobile" title="Player Dashboard">
+          <i class="fa-solid fa-gauge"></i> <span>Dashboard</span>
         </a>
 
+        <!-- Admin Control Button (Glowing Amber) -->
         {% if current_user.is_admin() %}
-          <a href="{{ url_for('admin.dashboard') }}" class="btn btn-warning btn-sm">
-            <i class="fa-solid fa-shield-halved"></i> Admin
+          <a href="{{ url_for('admin.dashboard') }}" class="btn-nav-admin" title="Admin Control Panel">
+            <i class="fa-solid fa-shield-halved"></i> <span>ADMIN</span>
           </a>
         {% endif %}
 
+        <!-- Logout Button (Glowing Red) -->
         <form method="POST" action="{{ url_for('auth.logout') }}" style="display:inline;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-danger btn-sm" title="Logout" style="font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+          <button type="submit" class="btn-nav-logout" title="Logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>LOGOUT</span>
           </button>
         </form>
       {% else %}
-        <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Login</a>
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Join Now</a>
+        {% if request.blueprint != 'auth' %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Login</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Join Now</a>
+        {% endif %}
       {% endif %}
 
       <!-- Mobile Hamburger Button -->
@@ -88,14 +108,18 @@
   <!-- Mobile Drawer Menu -->
   <div class="mobile-drawer" id="mobileDrawer">
     <div class="mobile-drawer-links">
-      <a href="{{ url_for('main.home') }}"><i class="fa-solid fa-house"></i> Home</a>
-      {% if current_user.is_authenticated %}
-        <a href="/my-matches"><i class="fa-solid fa-crosshairs"></i> My Matches</a>
+      {% if request.blueprint != 'auth' %}
+        <a href="{{ url_for('main.home') }}"><i class="fa-solid fa-house"></i> Home</a>
+        {% if current_user.is_authenticated %}
+          <a href="/my-matches"><i class="fa-solid fa-crosshairs"></i> My Matches</a>
+        {% endif %}
+        <a href="{{ url_for('tournaments.list_tournaments') }}"><i class="fa-solid fa-trophy"></i> Tournaments</a>
       {% endif %}
-      <a href="{{ url_for('tournaments.list_tournaments') }}"><i class="fa-solid fa-trophy"></i> Tournaments</a>
       <a href="{{ url_for('support.tickets') }}"><i class="fa-solid fa-headset"></i> Support Tickets</a>
-      <a href="{{ url_for('main.how_it_works') }}"><i class="fa-solid fa-circle-question"></i> How It Works</a>
-      <a href="{{ url_for('main.faq') }}"><i class="fa-solid fa-circle-info"></i> FAQ</a>
+      {% if request.blueprint != 'auth' %}
+        <a href="{{ url_for('main.how_it_works') }}"><i class="fa-solid fa-circle-question"></i> How It Works</a>
+        <a href="{{ url_for('main.faq') }}"><i class="fa-solid fa-circle-info"></i> FAQ</a>
+      {% endif %}
 
       {% if current_user.is_authenticated %}
         <hr class="drawer-divider">

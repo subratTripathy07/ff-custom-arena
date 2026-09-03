@@ -686,6 +686,98 @@ def review_deposit(deposit_id):
     return redirect(request.referrer or url_for("admin.list_payments"))
 
 
+@admin_bp.route("/deposits/bulk-action", methods=["POST"])
+@roles_required(Role.SUPER_ADMIN, Role.TOURNAMENT_MANAGER, Role.FINANCE_MANAGER, Role.MODERATOR)
+def bulk_deposit_action():
+    from app.models.wallet import WalletTransaction
+    deposit_ids = request.form.getlist("deposit_ids")
+    action = request.form.get("action")
+
+    if not deposit_ids:
+        flash("No deposits selected. Please check at least one box.", "warning")
+        return redirect(request.referrer or url_for("admin.list_payments"))
+
+    deposit_ids = [int(i) for i in deposit_ids if i.isdigit()]
+
+    if action == "delete":
+        txs = WalletTransaction.query.filter(WalletTransaction.id.in_(deposit_ids)).all()
+        count = len(txs)
+        for tx in txs:
+            db.session.delete(tx)
+        db.session.commit()
+        log_action(f"Admin bulk deleted {count} deposit records", "WalletTransaction", 0)
+        flash(f"🗑️ Successfully deleted {count} selected deposit records.", "info")
+
+    elif action == "approve":
+        txs = WalletTransaction.query.filter(WalletTransaction.id.in_(deposit_ids), WalletTransaction.status == "pending").all()
+        count = 0
+        for tx in txs:
+            tx.status = "SUCCESS"
+            wallet = tx.wallet
+            amt = float(tx.amount or 0)
+            coins = int(amt)
+            wallet.available_balance = float(wallet.available_balance or 0) + amt
+            wallet.total_added = float(wallet.total_added or 0) + amt
+            tx.balance_after = wallet.total_balance
+            if wallet.user:
+                wallet.user.coins_balance = (wallet.user.coins_balance or 0) + coins
+            notify_user(wallet.user_id, f"🎉 DEPOSIT APPROVED! ⚡{coins} Virtual Coins credited.", link="/payments/my", icon="⚡")
+            count += 1
+        db.session.commit()
+        flash(f"✅ Successfully approved {count} deposit requests.", "success")
+
+    elif action == "reject":
+        txs = WalletTransaction.query.filter(WalletTransaction.id.in_(deposit_ids), WalletTransaction.status == "pending").all()
+        count = 0
+        for tx in txs:
+            tx.status = "REJECTED"
+            tx.rejection_reason = "Bulk rejected by admin."
+            notify_user(tx.wallet.user_id, f"❌ DEPOSIT REJECTED! Request for ⚡{tx.amount} Tokens was rejected.", link="/payments/my", icon="❌")
+            count += 1
+        db.session.commit()
+        flash(f"❌ Rejected {count} deposit requests.", "warning")
+
+    return redirect(request.referrer or url_for("admin.list_payments"))
+
+
+@admin_bp.route("/deposits/<int:deposit_id>/delete", methods=["POST"])
+@roles_required(Role.SUPER_ADMIN, Role.TOURNAMENT_MANAGER, Role.FINANCE_MANAGER, Role.MODERATOR)
+def delete_deposit(deposit_id):
+    from app.models.wallet import WalletTransaction
+    tx = WalletTransaction.query.get_or_404(deposit_id)
+    db.session.delete(tx)
+    db.session.commit()
+    log_action(f"Admin deleted deposit transaction #{deposit_id}", "WalletTransaction", deposit_id)
+    flash(f"🗑️ Deposit #{deposit_id} record deleted successfully.", "info")
+    return redirect(request.referrer or url_for("admin.list_payments"))
+
+
+@admin_bp.route("/payments/<int:payment_id>/delete", methods=["POST"])
+@roles_required(Role.SUPER_ADMIN, Role.TOURNAMENT_MANAGER, Role.FINANCE_MANAGER, Role.MODERATOR)
+def delete_payment(payment_id):
+    payment = Payment.query.get_or_404(payment_id)
+    db.session.delete(payment)
+    db.session.commit()
+    log_action(f"Admin deleted payment #{payment_id}", "Payment", payment_id)
+    flash(f"🗑️ Payment #{payment_id} record deleted successfully.", "info")
+    return redirect(request.referrer or url_for("admin.list_payments"))
+
+
+@admin_bp.route("/registrations/<int:reg_id>/delete", methods=["POST"])
+@roles_required(Role.SUPER_ADMIN, Role.TOURNAMENT_MANAGER, Role.FINANCE_MANAGER, Role.MODERATOR)
+def delete_registration(reg_id):
+    reg = TournamentRegistration.query.get_or_404(reg_id)
+    tourn_id = reg.tournament_id
+    db.session.delete(reg)
+    db.session.commit()
+    log_action(f"Admin deleted tournament registration #{reg_id}", "TournamentRegistration", reg_id)
+    flash(f"🗑️ Tournament registration #{reg_id} deleted successfully.", "info")
+    return redirect(request.referrer or url_for("admin.manage_tournament", tournament_id=tourn_id))
+
+
+
+
+
 # ---------- Results Verification Management ----------
 
 @admin_bp.route("/results")

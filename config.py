@@ -12,29 +12,44 @@ class Config:
     SITE_NAME = os.environ.get("SITE_NAME", "FF Custom Arena")
     SITE_URL = os.environ.get("SITE_URL", "http://localhost:5000")
 
-    SECRET_KEY = os.environ.get("SECRET_KEY")
+    SECRET_KEY = os.environ.get(
+        "SECRET_KEY", "ff-custom-arena-secret-key-2026-production-fallback"
+    )
 
     # ---------- Database ----------
     DATABASE_URL = os.environ.get("DATABASE_URL")
-    if not DATABASE_URL:
+    if DATABASE_URL:
+        if DATABASE_URL.startswith("postgres://"):
+            DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    else:
         DB_USER = os.environ.get("DB_USER", "root")
         DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
         DB_HOST = os.environ.get("DB_HOST", "localhost")
         DB_PORT = os.environ.get("DB_PORT", "3306")
         DB_NAME = os.environ.get("DB_NAME", "ff_custom_arena")
-        DATABASE_URL = (
-            f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        )
+
+        # If deployed on Vercel or cloud without explicit DATABASE_URL, fall back to SQLite in /tmp
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            db_path = os.path.join("/tmp", "ff_custom_arena.db")
+            DATABASE_URL = f"sqlite:///{db_path}"
+        else:
+            DATABASE_URL = (
+                f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+            )
 
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
         "pool_recycle": 280,
-    }
+    } if not DATABASE_URL.startswith("sqlite") else {}
 
     # ---------- Uploads ----------
-    UPLOAD_FOLDER = os.path.join(basedir, os.environ.get("UPLOAD_FOLDER", "uploads"))
+    if os.environ.get("VERCEL"):
+        UPLOAD_FOLDER = "/tmp/uploads"
+    else:
+        UPLOAD_FOLDER = os.path.join(basedir, os.environ.get("UPLOAD_FOLDER", "uploads"))
+
     MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH_MB", 5)) * 1024 * 1024
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
     ALLOWED_PROOF_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "pdf", "mp4"}
@@ -43,7 +58,7 @@ class Config:
     # ---------- Security / Sessions ----------
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "True") == "True"
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "False") == "True"
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     REMEMBER_COOKIE_DURATION = timedelta(days=14)
     REMEMBER_COOKIE_HTTPONLY = True
@@ -97,3 +112,4 @@ config_by_name = {
     "production": ProductionConfig,
     "testing": TestingConfig,
 }
+

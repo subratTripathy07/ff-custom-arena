@@ -93,91 +93,131 @@
       </form>
     </div>
 
-    <!-- Player Wallet Deposit Requests Section (YES / NO APPROVALS) -->
-    <div class="card" style="margin-bottom: 28px; border: 1px solid var(--accent-warning); background: rgba(245,158,11,0.03); padding: 22px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <!-- Player Wallet Deposit Requests Section (YES / NO APPROVALS & BULK DELETE) -->
+    <div id="wallet-deposits-section" class="card" style="margin-bottom: 28px; border: 1px solid var(--accent-warning); background: rgba(245,158,11,0.03); padding: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
         <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-warning); margin: 0; display: flex; align-items: center; gap: 10px;">
           <i class="fa-solid fa-wallet"></i> PLAYER WALLET DEPOSIT REQUESTS (TOKEN APPROVALS)
         </h2>
         <span class="badge badge-warning">1 ₹ = 1 TOKEN ⚡</span>
       </div>
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-        Review payment screenshots and UTR numbers submitted by players. Click <strong>YES (APPROVE)</strong> to credit Tokens to player profile payment box, or <strong>NO (REJECT)</strong> to decline.
+        Review payment screenshots and UTR numbers. Use <strong>SELECT ALL</strong> to delete or approve multiple deposit requests at once.
       </p>
 
-      <div style="overflow-x: auto;">
-        {% if wallet_deposits %}
-          <table class="leaderboard-table">
-            <thead>
-              <tr style="background: rgba(0,0,0,0.4);">
-                <th>DEP ID</th>
-                <th>PLAYER</th>
-                <th>AMOUNT / TOKENS</th>
-                <th>TRANSACTION UTR</th>
-                <th>PAYMENT SCREENSHOT (PIC)</th>
-                <th>STATUS</th>
-                <th>ACTION (YES / NO)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for dep in wallet_deposits %}
-                <tr>
-                  <td>#{{ dep.id }}</td>
-                  <td>
-                    <strong style="color: #ffffff;">@{{ dep.wallet.user.username if dep.wallet and dep.wallet.user else 'User' }}</strong>
-                    <br><small style="color: var(--text-muted);">{{ dep.wallet.user.full_name if dep.wallet and dep.wallet.user else '' }}</small>
-                  </td>
-                  <td>
-                    <strong style="color: var(--accent-gold); font-size: 1.15rem;">⚡ {{ dep.amount }} Tokens</strong>
-                    <br><small style="color: var(--text-muted);">(₹{{ dep.amount }})</small>
-                  </td>
-                  <td>
-                    <strong class="mono" style="color: var(--accent-cyan);">{{ dep.reference_id or 'N/A' }}</strong>
-                    <br><small style="color: var(--text-muted);">{{ dep.payment_method or 'UPI' }}</small>
-                  </td>
-                  <td>
-                    {% if dep.proof_path %}
-                      <a href="{{ url_for('uploaded_file', filename=dep.proof_path) }}" target="_blank" title="Click to view full screenshot">
-                        <img src="{{ url_for('uploaded_file', filename=dep.proof_path) }}" alt="Screenshot Proof" 
-                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 2px solid var(--accent-cyan); background: #000;">
-                      </a>
-                    {% else %}
-                      <span style="color: var(--text-muted); font-size: 0.78rem;">No Pic Uploaded</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <span class="badge badge-{{ 'open' if dep.status == 'SUCCESS' else 'warning' if dep.status == 'pending' else 'closing' }}">
-                      {{ dep.status|upper }}
-                    </span>
-                  </td>
-                  <td>
-                    {% if dep.status == 'pending' %}
-                      <form method="POST" action="{{ url_for('admin.review_deposit', deposit_id=dep.id) }}" style="display: flex; gap: 6px;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" name="decision" value="yes" class="btn btn-success btn-sm" style="font-weight: 900; font-size: 0.82rem; padding: 6px 12px;">
-                          <i class="fa-solid fa-check"></i> YES (APPROVE)
-                        </button>
-                        <button type="submit" name="decision" value="no" class="btn btn-danger btn-sm" style="font-weight: 900; font-size: 0.82rem; padding: 6px 12px;">
-                          <i class="fa-solid fa-xmark"></i> NO (REJECT)
-                        </button>
-                      </form>
-                    {% else %}
-                      <span style="color: var(--text-muted); font-size: 0.78rem;">
-                        {{ dep.updated_at.strftime('%d %b %H:%M') if dep.updated_at else 'Processed' }}
-                      </span>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.88rem;">
-            No deposit requests pending at the moment.
+      {% if wallet_deposits %}
+        <!-- Bulk Action Form Wrapper -->
+        <form id="bulk-deposits-form" method="POST" action="{{ url_for('admin.bulk_deposit_action') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Bulk Actions Toolbar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.45); padding: 12px 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-weight: 800; cursor: pointer; color: var(--accent-cyan); font-size: 0.9rem; user-select: none; margin: 0;">
+                <input type="checkbox" id="select-all-deposits" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-cyan);">
+                SELECT ALL
+              </label>
+              <span style="color: var(--text-muted); font-size: 0.85rem;">(<strong id="selected-count" style="color: var(--accent-gold);">0</strong> selected)</span>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="submit" name="action" value="approve" class="btn btn-success btn-sm" style="font-weight: 800; font-size: 0.8rem; padding: 6px 14px;">
+                <i class="fa-solid fa-check-double"></i> APPROVE SELECTED
+              </button>
+              <button type="submit" name="action" value="reject" class="btn btn-warning btn-sm" style="font-weight: 800; font-size: 0.8rem; padding: 6px 14px;">
+                <i class="fa-solid fa-ban"></i> REJECT SELECTED
+              </button>
+              <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm" style="font-weight: 800; font-size: 0.8rem; padding: 6px 14px;" onclick="return confirm('Are you sure you want to PERMANENTLY DELETE all selected deposits?');">
+                <i class="fa-solid fa-trash-can"></i> DELETE SELECTED
+              </button>
+            </div>
           </div>
-        {% endif %}
-      </div>
+
+          <div style="overflow-x: auto;">
+            <table class="leaderboard-table">
+              <thead>
+                <tr style="background: rgba(0,0,0,0.4);">
+                  <th style="width: 40px; text-align: center;">#</th>
+                  <th>DEP ID</th>
+                  <th>PLAYER</th>
+                  <th>AMOUNT / TOKENS</th>
+                  <th>TRANSACTION UTR</th>
+                  <th>PAYMENT SCREENSHOT (PIC)</th>
+                  <th>STATUS</th>
+                  <th>ACTION (YES / NO / DELETE)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for dep in wallet_deposits %}
+                  <tr>
+                    <td style="text-align: center;">
+                      <input type="checkbox" name="deposit_ids" value="{{ dep.id }}" class="deposit-checkbox" style="width: 17px; height: 17px; cursor: pointer; accent-color: var(--accent-cyan);">
+                    </td>
+                    <td>#{{ dep.id }}</td>
+                    <td>
+                      <strong style="color: #ffffff;">@{{ dep.wallet.user.username if dep.wallet and dep.wallet.user else 'User' }}</strong>
+                      <br><small style="color: var(--text-muted);">{{ dep.wallet.user.full_name if dep.wallet and dep.wallet.user else '' }}</small>
+                    </td>
+                    <td>
+                      <strong style="color: var(--accent-gold); font-size: 1.15rem;">⚡ {{ dep.amount }} Tokens</strong>
+                      <br><small style="color: var(--text-muted);">(₹{{ dep.amount }})</small>
+                    </td>
+                    <td>
+                      <strong class="mono" style="color: var(--accent-cyan);">{{ dep.reference_id or 'N/A' }}</strong>
+                      <br><small style="color: var(--text-muted);">{{ dep.payment_method or 'UPI' }}</small>
+                    </td>
+                    <td>
+                      {% if dep.proof_path %}
+                        <a href="{{ url_for('uploaded_file', filename=dep.proof_path) }}" target="_blank" title="Click to view full screenshot">
+                          <img src="{{ url_for('uploaded_file', filename=dep.proof_path) }}" alt="Screenshot Proof" 
+                               style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 2px solid var(--accent-cyan); background: #000;">
+                        </a>
+                      {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.78rem;">No Pic Uploaded</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="badge badge-{{ 'open' if dep.status == 'SUCCESS' else 'warning' if dep.status == 'pending' else 'closing' }}">
+                        {{ dep.status|upper }}
+                      </span>
+                    </td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        {% if dep.status == 'pending' %}
+                          <button type="submit" name="decision" value="yes" class="btn btn-success btn-sm" style="font-weight: 900; font-size: 0.82rem; padding: 5px 10px;"
+                                  formaction="{{ url_for('admin.review_deposit', deposit_id=dep.id) }}">
+                            <i class="fa-solid fa-check"></i> YES
+                          </button>
+                          <button type="submit" name="decision" value="no" class="btn btn-warning btn-sm" style="font-weight: 900; font-size: 0.82rem; padding: 5px 10px;"
+                                  formaction="{{ url_for('admin.review_deposit', deposit_id=dep.id) }}">
+                            <i class="fa-solid fa-xmark"></i> NO
+                          </button>
+                        {% else %}
+                          <span style="color: var(--text-muted); font-size: 0.78rem;">
+                            {{ dep.updated_at.strftime('%d %b %H:%M') if dep.updated_at else 'Processed' }}
+                          </span>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-danger btn-sm" style="font-weight: 800; padding: 5px 10px; font-size: 0.78rem;" title="Delete Record"
+                                formaction="{{ url_for('admin.delete_deposit', deposit_id=dep.id) }}"
+                                onclick="return confirm('Are you sure you want to permanently delete Deposit #{{ dep.id }}?');">
+                          <i class="fa-solid fa-trash"></i> DELETE
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </form>
+      {% else %}
+        <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.88rem;">
+          No deposit requests pending at the moment.
+        </div>
+      {% endif %}
     </div>
+
 
     <!-- Filter & Search Controls -->
     <div class="card" style="margin-bottom: 24px; padding: 18px;">
@@ -238,20 +278,30 @@
                   </span>
                 </td>
                 <td>
-                  {% if p.status in ['verification_required', 'pending'] %}
-                    <form method="POST" action="{{ url_for('admin.review_payment', payment_id=p.id) }}" style="display: flex; gap: 6px;">
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    {% if p.status in ['verification_required', 'pending'] %}
+                      <form method="POST" action="{{ url_for('admin.review_payment', payment_id=p.id) }}" style="display: flex; gap: 6px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" name="decision" value="verified" class="btn btn-success btn-sm">
+                          <i class="fa-solid fa-check"></i> APPROVE
+                        </button>
+                        <button type="submit" name="decision" value="rejected" class="btn btn-warning btn-sm">
+                          <i class="fa-solid fa-xmark"></i> REJECT
+                        </button>
+                      </form>
+                    {% else %}
+                      <span style="color: var(--text-muted); font-size: 0.78rem;">{{ p.verified_at.strftime('%d %b %H:%M') if p.verified_at else 'Reviewed' }}</span>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('admin.delete_payment', payment_id=p.id) }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to permanently delete Payment #{{ p.id }}?');">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button type="submit" name="decision" value="verified" class="btn btn-success btn-sm">
-                        <i class="fa-solid fa-check"></i> APPROVE
-                      </button>
-                      <button type="submit" name="decision" value="rejected" class="btn btn-danger btn-sm">
-                        <i class="fa-solid fa-xmark"></i> REJECT
+                      <button type="submit" class="btn btn-danger btn-sm" style="font-weight: 800; padding: 5px 10px; font-size: 0.78rem;" title="Delete Record">
+                        <i class="fa-solid fa-trash"></i> DELETE
                       </button>
                     </form>
-                  {% else %}
-                    <span style="color: var(--text-muted); font-size: 0.78rem;">{{ p.verified_at.strftime('%d %b %H:%M') if p.verified_at else 'Reviewed' }}</span>
-                  {% endif %}
+                  </div>
                 </td>
+
               </tr>
             {% endfor %}
           </tbody>
@@ -279,4 +329,50 @@
     </div>
   </main>
 </div>
+
+<script>
+  // 1. Preserve Scroll Position across actions/reloads so interface doesn't jump to top
+  document.addEventListener('submit', function() {
+    sessionStorage.setItem('admin_payments_scroll', window.scrollY);
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedScroll = sessionStorage.getItem('admin_payments_scroll');
+    if (savedScroll !== null) {
+      window.scrollTo(0, parseInt(savedScroll));
+      sessionStorage.removeItem('admin_payments_scroll');
+    }
+  });
+
+  // 2. Select All Checkboxes & Count Logic
+  const selectAllCb = document.getElementById('select-all-deposits');
+  const depositCbs = document.querySelectorAll('.deposit-checkbox');
+  const selectedCountDisplay = document.getElementById('selected-count');
+
+  function updateSelectedCount() {
+    const count = document.querySelectorAll('.deposit-checkbox:checked').length;
+    if (selectedCountDisplay) {
+      selectedCountDisplay.textContent = count;
+    }
+  }
+
+  if (selectAllCb) {
+    selectAllCb.addEventListener('change', function() {
+      depositCbs.forEach(cb => {
+        cb.checked = this.checked;
+      });
+      updateSelectedCount();
+    });
+  }
+
+  depositCbs.forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (!this.checked && selectAllCb) {
+        selectAllCb.checked = false;
+      }
+      updateSelectedCount();
+    });
+  });
+</script>
 {% endblock %}
+

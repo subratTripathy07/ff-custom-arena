@@ -30,11 +30,11 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
       <div style="background: rgba(255,255,255,0.04); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); text-align: center;">
         <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">TOTAL MATCHES BOOKED</div>
-        <div style="font-size: 1.6rem; font-weight: 900; color: #ffffff; margin-top: 4px;">{{ booked_matches|length }}</div>
+        <div style="font-size: 1.6rem; font-weight: 900; color: #ffffff; margin-top: 4px;">{{ active_matches|length + past_matches|length }}</div>
       </div>
       <div style="background: rgba(16,185,129,0.08); padding: 14px; border-radius: 12px; border: 1px solid rgba(16,185,129,0.25); text-align: center;">
-        <div style="font-size: 0.75rem; font-weight: 700; color: #34d399; text-transform: uppercase;">UPCOMING / ACTIVE</div>
-        <div style="font-size: 1.6rem; font-weight: 900; color: #10b981; margin-top: 4px;">{{ active_count }}</div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: #34d399; text-transform: uppercase;">ACTIVE / UPCOMING</div>
+        <div style="font-size: 1.6rem; font-weight: 900; color: #10b981; margin-top: 4px;">{{ active_matches|length }}</div>
       </div>
       <div style="background: rgba(245,158,11,0.08); padding: 14px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.25); text-align: center;">
         <div style="font-size: 0.75rem; font-weight: 700; color: #fbbf24; text-transform: uppercase;">TOKENS SPENT</div>
@@ -43,172 +43,205 @@
     </div>
   </div>
 
-  <!-- Booked Matches List -->
-  {% if booked_matches %}
-    <div style="display: flex; flex-direction: column; gap: 20px;">
-      {% for item in booked_matches %}
-        {% set reg = item.registration %}
-        {% set tourn = item.tournament %}
-        {% set match = item.match %}
-        
-        <div class="card" style="background: #0d0824; border: 1px solid rgba(124,58,237,0.3); border-radius: 14px; padding: 22px; transition: transform 0.2s ease, border-color 0.2s ease;">
-          <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
-            <div>
-              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
-                <span class="badge" style="background: #7c3aed; color: #ffffff; font-weight: 800; font-size: 0.75rem; padding: 4px 10px;">
-                  {{ (tourn.game_mode or tourn.tournament_type or 'CLASSIC')|upper }} MODE
-                </span>
+  <!-- Active Booked Matches Section -->
+  <div style="margin-bottom: 30px;">
+    <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+      <i class="fa-solid fa-bolt text-neon-success" style="color: #10b981;"></i> ACTIVE / UPCOMING BOOKED SLOTS
+      <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 500;">(Auto-removes 10 mins after match start time)</span>
+    </h3>
+
+    {% if active_matches %}
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        {% for item in active_matches %}
+          {% set reg = item.registration %}
+          {% set tourn = item.tournament %}
+          {% set match = item.match %}
+          
+          <div class="card" style="background: #0d0824; border: 1px solid rgba(124,58,237,0.4); border-radius: 14px; padding: 22px; transition: transform 0.2s ease, border-color 0.2s ease;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
+                  <span class="badge" style="background: #7c3aed; color: #ffffff; font-weight: 800; font-size: 0.75rem; padding: 4px 10px;">
+                    {{ (tourn.game_mode or tourn.tournament_type or 'CLASSIC')|upper }} MODE
+                  </span>
+                  
+                  {% if reg.status == 'confirmed' %}
+                    <span class="badge" style="background: #10b981; color: #ffffff; font-weight: 800; font-size: 0.75rem; padding: 4px 10px;">
+                      <i class="fa-solid fa-circle-check"></i> SLOT CONFIRMED
+                    </span>
+                  {% else %}
+                    <span class="badge" style="background: #f59e0b; color: #ffffff; font-weight: 800; font-size: 0.75rem; padding: 4px 10px;">
+                      {{ reg.status|upper }}
+                    </span>
+                  {% endif %}
+
+                  <span style="color: #64748b; font-size: 0.8rem; font-weight: 600;" class="mono">
+                    Booked on {{ reg.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                  </span>
+                </div>
                 
-                {% if reg.status == 'confirmed' %}
-                  <span class="badge" style="background: #10b981; color: #ffffff; font-weight: 800; font-size: 0.75rem; padding: 4px 10px;">
-                    <i class="fa-solid fa-circle-check"></i> SLOT CONFIRMED
-                  </span>
-                {% else %}
-                  <span class="badge" style="background: #f59e0b; color: #ffffff; font-weight: 800; font-size: 0.75rem; padding: 4px 10px;">
-                    {{ reg.status|upper }}
-                  </span>
-                {% endif %}
+                <h2 style="margin: 0; font-size: 1.35rem; font-weight: 900; color: #ffffff;">
+                  <a href="{{ url_for('tournaments.detail', slug=tourn.slug) }}" style="color: #ffffff; text-decoration: none;">
+                    {{ tourn.name }}
+                  </a>
+                </h2>
+              </div>
 
-                <span style="color: #64748b; font-size: 0.8rem; font-weight: 600;" class="mono">
-                  Booked on {{ reg.created_at.strftime('%d %b %Y, %I:%M %p') }}
+              <div style="text-align: right;">
+                <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">ENTRY FEE PAID</div>
+                <div style="font-size: 1.15rem; font-weight: 900; color: #fbbf24;">⚡ {{ item.entry_fee|int }} Tokens</div>
+              </div>
+            </div>
+
+            <!-- Main Info Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+              
+              <!-- Reserved Slot Box -->
+              <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 14px;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: #34d399; text-transform: uppercase; margin-bottom: 4px;">
+                  <i class="fa-solid fa-bullseye"></i> RESERVED POSITION
+                </div>
+                <div style="font-size: 1.4rem; font-weight: 900; color: #ffffff;">
+                  Slot #{{ item.slot_number }}
+                </div>
+                <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px;">
+                  Team: <strong>{{ item.team.name if item.team else 'Solo' }}</strong>
+                </div>
+                <div style="font-size: 0.75rem; color: #94a3b8;" class="mono">
+                  IGN: {{ item.in_game_name }}
+                </div>
+              </div>
+
+              <!-- Registration Code Box -->
+              <div style="background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 10px; padding: 14px;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: #a78bfa; text-transform: uppercase; margin-bottom: 4px;">
+                  <i class="fa-solid fa-qrcode"></i> REGISTRATION CODE
+                </div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #ffffff;" class="mono">
+                  {{ item.registration_code }}
+                </div>
+                <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 6px;">
+                  Show this code to admin for support verification
+                </div>
+              </div>
+
+              <!-- Schedule & Prize Box -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px;">
+                  <i class="fa-solid fa-calendar-days"></i> MATCH SCHEDULE
+                </div>
+                <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff;">
+                  {% if item.match_start_dt %}
+                    {{ item.match_start_dt.strftime('%a, %d %b @ %I:%M %p') }}
+                  {% elif match and match.scheduled_time %}
+                    {{ match.scheduled_time.strftime('%a, %d %b @ %I:%M %p') }}
+                  {% else %}
+                    To Be Announced
+                  {% endif %}
+                </div>
+                <div style="font-size: 0.8rem; color: #fbbf24; font-weight: 800; margin-top: 6px;">
+                  🏆 Prize Pool: ₹{{ tourn.prize_pool }}
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Room Credentials Box (Crucial for players) -->
+            <div style="background: rgba(15,23,42,0.8); border: 1px dashed rgba(6,182,212,0.5); border-radius: 10px; padding: 16px; margin-bottom: 18px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                <div style="font-weight: 800; color: #22d3ee; font-size: 0.88rem; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-key" style="color: #22d3ee;"></i> CUSTOM ROOM ID & PASSWORD
+                </div>
+                <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600;">
+                  (Join room 5 mins before schedule time)
                 </span>
               </div>
-              
-              <h2 style="margin: 0; font-size: 1.35rem; font-weight: 900; color: #ffffff;">
-                <a href="{{ url_for('tournaments.detail', slug=tourn.slug) }}" style="color: #ffffff; text-decoration: none;">
-                  {{ tourn.name }}
-                </a>
-              </h2>
-            </div>
 
-            <div style="text-align: right;">
-              <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">ENTRY FEE PAID</div>
-              <div style="font-size: 1.15rem; font-weight: 900; color: #fbbf24;">⚡ {{ item.entry_fee|int }} Tokens</div>
-            </div>
-          </div>
-
-          <!-- Main Info Grid -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
-            
-            <!-- Reserved Slot Box -->
-            <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 14px;">
-              <div style="font-size: 0.75rem; font-weight: 800; color: #34d399; text-transform: uppercase; margin-bottom: 4px;">
-                <i class="fa-solid fa-bullseye"></i> RESERVED POSITION
-              </div>
-              <div style="font-size: 1.4rem; font-weight: 900; color: #ffffff;">
-                Slot #{{ item.slot_number }}
-              </div>
-              <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px;">
-                Team: <strong>{{ item.team.name if item.team else 'Solo' }}</strong>
-              </div>
-              <div style="font-size: 0.75rem; color: #94a3b8;" class="mono">
-                IGN: {{ item.in_game_name }}
-              </div>
-            </div>
-
-            <!-- Registration Code Box -->
-            <div style="background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 10px; padding: 14px;">
-              <div style="font-size: 0.75rem; font-weight: 800; color: #a78bfa; text-transform: uppercase; margin-bottom: 4px;">
-                <i class="fa-solid fa-qrcode"></i> REGISTRATION CODE
-              </div>
-              <div style="font-size: 1.1rem; font-weight: 900; color: #ffffff;" class="mono">
-                {{ item.registration_code }}
-              </div>
-              <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 6px;">
-                Show this code to admin for support verification
-              </div>
-            </div>
-
-            <!-- Schedule & Prize Box -->
-            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px;">
-              <div style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px;">
-                <i class="fa-solid fa-calendar-days"></i> MATCH SCHEDULE
-              </div>
-              <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff;">
-                {% if match and match.scheduled_time %}
-                  {{ match.scheduled_time.strftime('%a, %d %b @ %I:%M %p') }}
-                {% elif tourn.start_date %}
-                  {{ tourn.start_date.strftime('%a, %d %b @ %I:%M %p') }}
-                {% else %}
-                  To Be Announced
-                {% endif %}
-              </div>
-              <div style="font-size: 0.8rem; color: #fbbf24; font-weight: 800; margin-top: 6px;">
-                🏆 Prize Pool: ₹{{ tourn.prize_pool }}
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Room Credentials Box (Crucial for players) -->
-          <div style="background: rgba(15,23,42,0.8); border: 1px dashed rgba(6,182,212,0.5); border-radius: 10px; padding: 16px; margin-bottom: 18px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-              <div style="font-weight: 800; color: #22d3ee; font-size: 0.88rem; display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-key" style="color: #22d3ee;"></i> CUSTOM ROOM ID & PASSWORD
-              </div>
-              <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600;">
-                (Join room 5 mins before schedule time)
-              </span>
-            </div>
-
-            {% if match and match.room_id %}
-              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <span style="font-size: 0.7rem; color: #94a3b8; display: block; font-weight: 700;">ROOM ID</span>
-                    <strong style="color: #ffffff; font-size: 1.1rem;" class="mono">{{ match.room_id }}</strong>
+              {% if match and match.room_id %}
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                  <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <span style="font-size: 0.7rem; color: #94a3b8; display: block; font-weight: 700;">ROOM ID</span>
+                      <strong style="color: #ffffff; font-size: 1.1rem;" class="mono">{{ match.room_id }}</strong>
+                    </div>
+                    <button type="button" onclick="copyText('{{ match.room_id }}', 'Room ID')" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
+                      <i class="fa-solid fa-copy"></i>
+                    </button>
                   </div>
-                  <button type="button" onclick="copyText('{{ match.room_id }}', 'Room ID')" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
-                    <i class="fa-solid fa-copy"></i>
-                  </button>
-                </div>
 
-                <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <span style="font-size: 0.7rem; color: #94a3b8; display: block; font-weight: 700;">PASSWORD</span>
-                    <strong style="color: #fbbf24; font-size: 1.1rem;" class="mono">{{ match.room_password or '1234' }}</strong>
+                  <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <span style="font-size: 0.7rem; color: #94a3b8; display: block; font-weight: 700;">PASSWORD</span>
+                      <strong style="color: #fbbf24; font-size: 1.1rem;" class="mono">{{ match.room_password or '1234' }}</strong>
+                    </div>
+                    <button type="button" onclick="copyText('{{ match.room_password or "1234" }}', 'Password')" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
+                      <i class="fa-solid fa-copy"></i>
+                    </button>
                   </div>
-                  <button type="button" onclick="copyText('{{ match.room_password or "1234" }}', 'Password')" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
-                    <i class="fa-solid fa-copy"></i>
-                  </button>
                 </div>
-              </div>
-            {% else %}
-              <div style="display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 0.85rem;">
-                <i class="fa-solid fa-clock" style="color: #f59e0b; font-size: 1.1rem;"></i>
-                <div>
-                  <strong>Room ID & Password will be published 15 minutes before the match start time.</strong>
-                  <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">Keep checking this page or your WhatsApp/SMS alerts!</div>
+              {% else %}
+                <div style="display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 0.85rem;">
+                  <i class="fa-solid fa-clock" style="color: #f59e0b; font-size: 1.1rem;"></i>
+                  <div>
+                    <strong>Room ID & Password will be published 15 minutes before the match start time.</strong>
+                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">Keep checking this page or your WhatsApp/SMS alerts!</div>
+                  </div>
                 </div>
-              </div>
-            {% endif %}
-          </div>
+              {% endif %}
+            </div>
 
-          <!-- Bottom Action Buttons -->
-          <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
-            <a href="{{ url_for('tournaments.detail', slug=tourn.slug) }}" class="btn btn-primary" style="font-weight: 800; font-size: 0.88rem; padding: 10px 20px;">
-              ENTER ARENA / VIEW TOURNAMENT <i class="fa-solid fa-arrow-right"></i>
-            </a>
-          </div>
+            <!-- Bottom Action Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+              <a href="{{ url_for('tournaments.detail', slug=tourn.slug) }}" class="btn btn-primary" style="font-weight: 800; font-size: 0.88rem; padding: 10px 20px;">
+                ENTER ARENA / VIEW TOURNAMENT <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
 
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <!-- Empty State -->
-    <div class="card" style="text-align: center; padding: 50px 20px; background: #0c071e; border: 1px dashed rgba(124,58,237,0.3); border-radius: 16px;">
-      <div style="width: 80px; height: 80px; background: rgba(124,58,237,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-        <i class="fa-solid fa-gamepad" style="font-size: 2.2rem; color: #a78bfa;"></i>
+          </div>
+        {% endfor %}
       </div>
-      <h3 style="color: #ffffff; font-weight: 800; margin-bottom: 8px;">NO BOOKED MATCHES YET</h3>
-      <p style="color: #94a3b8; font-size: 0.9rem; max-width: 420px; margin: 0 auto 24px;">
-        You haven't registered for any Free Fire tournaments yet. Browse active tournaments and book your slot with Tokens!
-      </p>
-      <a href="{{ url_for('tournaments.list_tournaments') }}" class="btn btn-primary" style="font-weight: 800; padding: 12px 24px;">
-        <i class="fa-solid fa-trophy"></i> BROWSE & BOOK MATCHES
-      </a>
+    {% else %}
+      <div class="card" style="text-align: center; padding: 40px 20px; background: #0c071e; border: 1px dashed rgba(124,58,237,0.3); border-radius: 16px;">
+        <i class="fa-solid fa-calendar-xmark" style="font-size: 2rem; color: #94a3b8; margin-bottom: 10px;"></i>
+        <h4 style="color: #ffffff; font-weight: 800; margin-bottom: 6px;">NO ACTIVE OR UPCOMING MATCHES</h4>
+        <p style="color: #94a3b8; font-size: 0.88rem; margin: 0 0 16px;">All your scheduled matches have passed or you haven't booked any new tournaments.</p>
+        <a href="{{ url_for('tournaments.list_tournaments') }}" class="btn btn-primary btn-sm" style="font-weight: 800;">
+          <i class="fa-solid fa-plus"></i> BOOK A NEW MATCH
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Past / Completed Matches Section -->
+  {% if past_matches %}
+    <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+      <details>
+        <summary style="cursor: pointer; font-size: 1.1rem; font-weight: 800; color: #94a3b8; display: flex; align-items: center; gap: 10px; user-select: none;">
+          <i class="fa-solid fa-clock-rotate-left"></i> PAST & COMPLETED MATCHES HISTORY ({{ past_matches|length }})
+        </summary>
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 16px;">
+          {% for item in past_matches %}
+            {% set reg = item.registration %}
+            {% set tourn = item.tournament %}
+            <div class="card" style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; opacity: 0.75;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <span class="badge" style="background: #475569; color: #ffffff; font-size: 0.7rem;">MATCH EXPIRED</span>
+                  <h4 style="margin: 4px 0 0; color: #ffffff; font-weight: 800; font-size: 1.1rem;">{{ tourn.name }}</h4>
+                  <small style="color: #94a3b8;">Slot #{{ item.slot_number }} | Reg Code: <code>{{ item.registration_code }}</code></small>
+                </div>
+                <div style="text-align: right;">
+                  <span style="color: #cbd5e1; font-size: 0.8rem; display: block;">Status: {{ reg.status|upper }}</span>
+                  <small style="color: #94a3b8;">{{ item.created_at.strftime('%d %b %Y') }}</small>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </details>
     </div>
   {% endif %}
+
 
 </div>
 

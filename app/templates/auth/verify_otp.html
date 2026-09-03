@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Enter OTP — {{ site_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-page { min-height:90vh; display:flex; align-items:center; justify-content:center; padding:40px 16px; position:relative; }
+.auth-page::before { content:''; position:fixed; top:10%; left:5%; width:450px; height:450px; background:radial-gradient(circle,rgba(124,58,237,0.18) 0%,transparent 70%); pointer-events:none; z-index:0; }
+.auth-page::after { content:''; position:fixed; bottom:10%; right:5%; width:380px; height:380px; background:radial-gradient(circle,rgba(251,191,36,0.1) 0%,transparent 70%); pointer-events:none; z-index:0; }
+.reset-card { width:100%; max-width:460px; background:linear-gradient(160deg,rgba(18,14,36,0.98),rgba(10,8,20,0.98)); border:1px solid rgba(139,92,246,0.25); border-radius:28px; padding:52px 44px; position:relative; z-index:1; box-shadow:0 30px 80px rgba(0,0,0,0.7),0 0 60px rgba(139,92,246,0.12); overflow:hidden; }
+.reset-card::before { content:''; position:absolute; top:0; left:10%; right:10%; height:1px; background:linear-gradient(90deg,transparent,rgba(251,191,36,0.6),transparent); }
+.otp-input-row { display:flex; gap:10px; justify-content:center; margin:28px 0; }
+.otp-digit { width:52px; height:62px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.25); color:#fff; font-size:1.8rem; font-weight:900; text-align:center; font-family:monospace; transition:all 0.2s ease; }
+.otp-digit:focus { outline:none; border-color:rgba(251,191,36,0.7); background:rgba(251,191,36,0.08); box-shadow:0 0 0 3px rgba(251,191,36,0.2); }
+.fbtn { width:100%; padding:15px; border-radius:12px; background:linear-gradient(135deg,#f59e0b,#d97706); color:#000; border:none; font-size:1rem; font-weight:900; cursor:pointer; letter-spacing:0.04em; text-transform:uppercase; transition:all 0.25s ease; box-shadow:0 6px 24px rgba(245,158,11,0.4); }
+.fbtn:hover { transform:translateY(-2px); box-shadow:0 12px 36px rgba(245,158,11,0.55); filter:brightness(1.08); }
+.alert-box { padding:12px 16px; border-radius:10px; margin-bottom:18px; font-size:0.87rem; font-weight:600; display:flex; align-items:flex-start; gap:10px; }
+.alert-err { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#fca5a5; }
+.otp-hidden { position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="reset-card">
+    <!-- Icon -->
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,rgba(245,158,11,0.3),rgba(251,191,36,0.1));border:1px solid rgba(245,158,11,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 0 30px rgba(245,158,11,0.25);">
+        <i class="fa-solid fa-shield-halved" style="font-size:1.8rem;color:#fbbf24;"></i>
+      </div>
+      <h2 style="font-size:1.6rem;font-weight:900;color:#fff;margin:0 0 8px;">Enter OTP</h2>
+      <p style="font-size:0.88rem;color:var(--text-muted);margin:0;line-height:1.6;">
+        We sent a <strong style="color:#fbbf24;">6-digit OTP</strong> to<br>
+        <strong style="color:#a78bfa;">{{ email }}</strong>
+      </p>
+    </div>
+
+    {% if error %}
+    <div class="alert-box alert-err">
+      <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0;margin-top:2px;"></i>
+      <span>{{ error }}
+        {% if expired %}
+          <a href="{{ url_for('auth.forgot_password') }}" style="color:#fbbf24;font-weight:700;margin-left:6px;">Request New OTP →</a>
+        {% endif %}
+      </span>
+    </div>
+    {% endif %}
+
+    <!-- OTP Boxes + Hidden Input -->
+    <form method="POST" id="otpForm" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="otp" id="otpHiddenInput">
+
+      <div style="text-align:center;">
+        <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 4px;">Enter the 6-digit code</p>
+        <div class="otp-input-row" id="otpBoxes">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="d0">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="d1">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="d2">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="d3">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="d4">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="d5">
+        </div>
+      </div>
+
+      <button type="submit" class="fbtn" id="verifyBtn" style="opacity:0.5;" disabled>
+        <i class="fa-solid fa-circle-check"></i> &nbsp; VERIFY OTP
+      </button>
+    </form>
+
+    <!-- Timer & Resend -->
+    <div style="text-align:center;margin-top:24px;">
+      <p style="font-size:0.83rem;color:var(--text-muted);margin:0 0 8px;" id="timerText">
+        OTP expires in <strong id="countdown" style="color:#fbbf24;">10:00</strong>
+      </p>
+      <a href="{{ url_for('auth.forgot_password') }}" style="font-size:0.83rem;color:var(--text-muted);text-decoration:none;">
+        <i class="fa-solid fa-rotate-right" style="font-size:0.75rem;"></i> Resend OTP
+      </a>
+    </div>
+
+    <div style="text-align:center;margin-top:16px;">
+      <a href="{{ url_for('auth.login') }}" style="font-size:0.83rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fa-solid fa-arrow-left" style="font-size:0.75rem;"></i> Back to Login
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const digits = Array.from({length:6}, (_,i) => document.getElementById('d'+i));
+const hiddenInput = document.getElementById('otpHiddenInput');
+const verifyBtn = document.getElementById('verifyBtn');
+
+function updateHidden() {
+  const val = digits.map(d=>d.value).join('');
+  hiddenInput.value = val;
+  const ready = val.length === 6 && /^\d{6}$/.test(val);
+  verifyBtn.disabled = !ready;
+  verifyBtn.style.opacity = ready ? '1' : '0.5';
+}
+
+digits.forEach((el, i) => {
+  el.addEventListener('input', e => {
+    el.value = el.value.replace(/\D/g,'').slice(-1);
+    if (el.value && i < 5) digits[i+1].focus();
+    updateHidden();
+  });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !el.value && i > 0) {
+      digits[i-1].focus();
+      digits[i-1].value = '';
+      updateHidden();
+    }
+  });
+  el.addEventListener('paste', e => {
+    e.preventDefault();
+    const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+    pasted.split('').forEach((ch, j) => { if (digits[j]) digits[j].value = ch; });
+    if (digits[pasted.length-1]) digits[Math.min(pasted.length,5)].focus();
+    updateHidden();
+  });
+});
+digits[0].focus();
+
+// Countdown 10 minutes
+let secs = 600;
+const cdEl = document.getElementById('countdown');
+const timerInterval = setInterval(() => {
+  secs--;
+  if (secs <= 0) { clearInterval(timerInterval); cdEl.textContent = 'Expired'; cdEl.style.color='#ef4444'; verifyBtn.disabled=true; verifyBtn.style.opacity='0.4'; return; }
+  const m = String(Math.floor(secs/60)).padStart(2,'0');
+  const s = String(secs%60).padStart(2,'0');
+  cdEl.textContent = m+':'+s;
+}, 1000);
+
+document.getElementById('otpForm').addEventListener('submit', function() {
+  verifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> &nbsp; VERIFYING...';
+  verifyBtn.disabled = true;
+});
+</script>
+{% endblock %}

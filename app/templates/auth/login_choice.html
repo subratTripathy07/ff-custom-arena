@@ -1,23 +1,284 @@
 {% extends "base.html" %}
 {% block title %}Login | {{ site_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .choice-page {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    position: relative;
+  }
+
+  /* Ambient glow orbs */
+  .choice-page::before {
+    content: '';
+    position: fixed;
+    top: 15%;
+    left: 5%;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .choice-page::after {
+    content: '';
+    position: fixed;
+    bottom: 10%;
+    right: 5%;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .choice-wrapper {
+    width: 100%;
+    max-width: 680px;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  /* Logo badge */
+  .choice-logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .choice-logo-badge .fire-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: rgba(255,75,92,0.15);
+    border: 1px solid rgba(255,75,92,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #ff4b5c;
+    box-shadow: 0 0 24px rgba(255,75,92,0.25);
+  }
+  .choice-logo-badge .site-name {
+    font-size: 1.3rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.02em;
+  }
+
+  .choice-headline {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 900;
+    color: #fff;
+    margin: 0 0 14px;
+    line-height: 1.1;
+  }
+  .choice-headline span {
+    background: linear-gradient(135deg, #7c3aed, #06b6d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .choice-subtext {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin: 0 0 52px;
+    line-height: 1.6;
+  }
+
+  /* Login Option Cards */
+  .choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 36px;
+  }
+  @media (max-width: 500px) {
+    .choice-grid { grid-template-columns: 1fr; }
+  }
+
+  .choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 28px;
+    border-radius: 24px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    cursor: pointer;
+  }
+
+  /* Player card */
+  .choice-card-player {
+    background: linear-gradient(145deg, rgba(20,14,42,0.9), rgba(12,9,26,0.95));
+    border: 1px solid rgba(139,92,246,0.25);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .choice-card-player::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
+  }
+  .choice-card-player:hover {
+    transform: translateY(-8px);
+    border-color: rgba(139,92,246,0.6);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(139,92,246,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  /* Admin card */
+  .choice-card-admin {
+    background: linear-gradient(145deg, rgba(14,20,42,0.9), rgba(9,12,26,0.95));
+    border: 1px solid rgba(6,182,212,0.22);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .choice-card-admin::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(6,182,212,0.55), transparent);
+  }
+  .choice-card-admin:hover {
+    transform: translateY(-8px);
+    border-color: rgba(6,182,212,0.55);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(6,182,212,0.2), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  .choice-card-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2rem;
+    position: relative;
+  }
+  .icon-player {
+    background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(139,92,246,0.1));
+    border: 1px solid rgba(139,92,246,0.45);
+    box-shadow: 0 0 28px rgba(139,92,246,0.3);
+    color: #a78bfa;
+  }
+  .icon-admin {
+    background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(6,182,212,0.1));
+    border: 1px solid rgba(6,182,212,0.45);
+    box-shadow: 0 0 28px rgba(6,182,212,0.3);
+    color: #22d3ee;
+  }
+
+  .choice-card-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #fff;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .choice-card-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 20px;
+    line-height: 1.5;
+  }
+  .choice-card-badge {
+    padding: 5px 16px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge-player {
+    background: rgba(139,92,246,0.18);
+    border: 1px solid rgba(139,92,246,0.4);
+    color: #a78bfa;
+  }
+  .badge-admin {
+    background: rgba(6,182,212,0.15);
+    border: 1px solid rgba(6,182,212,0.4);
+    color: #22d3ee;
+  }
+
+  .choice-footer {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .choice-footer a {
+    color: var(--accent-primary);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .choice-footer a:hover {
+    color: #a78bfa;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-  <div class="card auth-shell">
-    <h2 style="text-align:center; margin-bottom:6px;">Welcome to {{ site_name }}</h2>
-    <p style="text-align:center; color:var(--text-muted); margin-bottom:26px; font-size:14px;">Choose how you would like to sign in.</p>
-    <div class="grid grid-2">
-      <a href="{{ url_for('auth.login', portal='user', next=next_page) }}" class="card card-glow-hover" style="text-align:center; text-decoration:none;">
-        <div style="font-size:32px;">🎮</div>
-        <h3 style="margin-top:10px;">Normal Login</h3>
-        <p style="color:var(--text-muted); font-size:13px; margin-top:6px;">For players and team captains</p>
-      </a>
-      <a href="{{ url_for('auth.login', portal='admin', next=next_page) }}" class="card card-glow-hover" style="text-align:center; text-decoration:none;">
-        <div style="font-size:32px;">🛡️</div>
-        <h3 style="margin-top:10px;">Admin Login</h3>
-        <p style="color:var(--text-muted); font-size:13px; margin-top:6px;">For arena administrators</p>
-      </a>
+<div class="choice-page">
+  <div class="choice-wrapper">
+
+    <!-- Brand Badge -->
+    <div class="choice-logo-badge">
+      <div class="fire-icon"><i class="fa-solid fa-fire"></i></div>
+      <div class="site-name">FF CUSTOM ARENA</div>
     </div>
-    <p style="text-align:center; margin-top:20px; font-size:14px; color:var(--text-muted);">New player? <a href="{{ url_for('auth.register') }}" style="color:var(--accent-secondary);">Create an account</a></p>
+
+    <!-- Headline -->
+    <h1 class="choice-headline">Choose Your <span>Battle Portal</span></h1>
+    <p class="choice-subtext">Select your account type to enter the arena</p>
+
+    <!-- Choice Cards Grid -->
+    <div class="choice-grid">
+
+      <!-- Player Login -->
+      <a href="{{ url_for('auth.login', portal='user', next=next_page) }}" class="choice-card choice-card-player">
+        <div class="choice-card-icon icon-player">
+          <i class="fa-solid fa-gamepad"></i>
+        </div>
+        <div class="choice-card-title">Player Login</div>
+        <div class="choice-card-desc">For players, team captains &amp; competitors</div>
+        <span class="choice-card-badge badge-player">
+          <i class="fa-solid fa-crosshairs" style="font-size:0.65rem;"></i> &nbsp; Join Arena
+        </span>
+      </a>
+
+      <!-- Admin Login -->
+      <a href="{{ url_for('auth.login', portal='admin', next=next_page) }}" class="choice-card choice-card-admin">
+        <div class="choice-card-icon icon-admin">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div class="choice-card-title">Admin Login</div>
+        <div class="choice-card-desc">For arena administrators &amp; organizers</div>
+        <span class="choice-card-badge badge-admin">
+          <i class="fa-solid fa-lock" style="font-size:0.65rem;"></i> &nbsp; Admin Panel
+        </span>
+      </a>
+
+    </div>
+
+    <!-- Footer Link -->
+    <p class="choice-footer">
+      New to FF Custom Arena? &nbsp;
+      <a href="{{ url_for('auth.register') }}">
+        <i class="fa-solid fa-user-plus" style="font-size:0.8rem;"></i> Create Free Account
+      </a>
+    </p>
+
   </div>
 </div>
 {% endblock %}

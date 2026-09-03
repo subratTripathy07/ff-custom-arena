@@ -1,12 +1,75 @@
+import os
 from flask import Flask, abort, render_template, send_from_directory
 from flask_login import current_user
 from config import config_by_name
 from app.extensions import db, migrate, login_manager, csrf, limiter, socketio
 
 
+def _init_db_and_seed(app):
+    """Auto-create tables and seed initial roles & super admin if needed."""
+    with app.app_context():
+        try:
+            import app.models  # Register all models with SQLAlchemy metadata
+            db.create_all()
+            from app.models.user import User, Role
+            from app.models.player import PlayerProfile, Achievement
+
+
+            ROLES = [
+                (Role.SUPER_ADMIN, "Full access to everything"),
+                (Role.TOURNAMENT_MANAGER, "Create tournaments, manage matches/rooms/results"),
+                (Role.MODERATOR, "Handle disputes, reports, player moderation"),
+                (Role.FINANCE_MANAGER, "Manage payments and prize distribution"),
+                (Role.PLAYER, "Default role for registered players"),
+            ]
+
+            ACHIEVEMENTS = [
+                ("FIRST_BLOOD", "First Blood", "🔥", "Get your first kill in a tournament match."),
+                ("HUNDRED_KILLS", "100 Kills", "💀", "Reach 100 career kills."),
+                ("TOURNAMENT_WINNER", "Tournament Winner", "🏆", "Win a tournament."),
+                ("FIVE_X_MVP", "5x MVP", "⭐", "Earn MVP 5 times."),
+                ("TOP_RANKED", "Top Ranked", "👑", "Reach #1 on the global leaderboard."),
+                ("TWENTY_KILL_GAME", "20 Kill Game", "🎯", "Get 20 kills in a single match."),
+            ]
+
+            for name, desc in ROLES:
+                if not Role.query.filter_by(name=name).first():
+                    db.session.add(Role(name=name, description=desc))
+
+            for code, title, icon, desc in ACHIEVEMENTS:
+                if not Achievement.query.filter_by(code=code).first():
+                    db.session.add(Achievement(code=code, title=title, icon=icon, description=desc))
+
+            db.session.commit()
+
+            super_admin_role = Role.query.filter_by(name=Role.SUPER_ADMIN).first()
+            if super_admin_role and not User.query.filter_by(role_id=super_admin_role.id).first():
+                admin = User(
+                    full_name="Super Admin",
+                    username="subrat",
+                    email="admin@ffcustomarena.local",
+                    phone="+910000000000",
+                    role_id=super_admin_role.id,
+                    is_email_verified=True,
+                )
+                admin.set_password("subrat7894")
+                db.session.add(admin)
+                db.session.flush()
+                db.session.add(PlayerProfile(user_id=admin.id))
+                db.session.commit()
+        except Exception as e:
+            app.logger.warning(f"Database auto-init skipped or failed: {e}")
+
+
 def create_app(config_name="development"):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
+
+    # Ensure upload directory exists
+    try:
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    except Exception:
+        pass
 
     # ---------- Init extensions ----------
     db.init_app(app)
@@ -14,7 +77,14 @@ def create_app(config_name="development"):
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
-    socketio.init_app(app)
+
+    try:
+        socketio.init_app(app)
+    except Exception:
+        pass
+
+    _init_db_and_seed(app)
+
 
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
