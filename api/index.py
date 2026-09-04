@@ -8,4 +8,5 @@ if basedir not in sys.path:
 
 from app import create_app
 
-app = create_app("production")
+app = create_app(os.environ.get("FLASK_ENV", "production"))
+handler = app

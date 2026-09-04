@@ -33,9 +33,11 @@ class TestPaymentSystem(unittest.TestCase):
         """Test UTR validation and automated verification (PAYMENT DONE)."""
         payment = Payment.query.first()
         if not payment:
-            role = Role(name="player", description="Player")
-            db.session.add(role)
-            db.session.flush()
+            role = Role.query.filter_by(name=Role.PLAYER).first()
+            if not role:
+                role = Role(name=Role.PLAYER, description="Player")
+                db.session.add(role)
+                db.session.flush()
             user = User(full_name="Test Player", username="testplayer", email="test@player.com", role_id=role.id)
             user.set_password("pass123")
             db.session.add(user)

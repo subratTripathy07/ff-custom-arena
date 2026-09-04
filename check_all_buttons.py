@@ -22,9 +22,14 @@ class TestAllButtonsAndRoutes(unittest.TestCase):
         db.create_all()
 
         # Seed roles & test users
-        admin_role = Role(name=Role.SUPER_ADMIN, description="Admin")
-        player_role = Role(name=Role.PLAYER, description="Player")
-        db.session.add_all([admin_role, player_role])
+        admin_role = Role.query.filter_by(name=Role.SUPER_ADMIN).first()
+        if not admin_role:
+            admin_role = Role(name=Role.SUPER_ADMIN, description="Admin")
+            db.session.add(admin_role)
+        player_role = Role.query.filter_by(name=Role.PLAYER).first()
+        if not player_role:
+            player_role = Role(name=Role.PLAYER, description="Player")
+            db.session.add(player_role)
         db.session.flush()
 
         self.admin = User(full_name="Admin Test", username="admin_tester", email="admin@test.com", role_id=admin_role.id)
