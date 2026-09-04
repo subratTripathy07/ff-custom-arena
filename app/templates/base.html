@@ -63,7 +63,9 @@
     </a>
   </div>
 
+  {% if not request.host.endswith('.vercel.app') %}
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  {% endif %}
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block extra_js %}{% endblock %}
 </body>

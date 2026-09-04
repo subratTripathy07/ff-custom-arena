@@ -17,37 +17,57 @@ main_bp = Blueprint("main", __name__, template_folder="../templates/main")
 def home():
     now = datetime.utcnow()
 
-    live_tournaments = (
-        Tournament.query.filter_by(status="live").order_by(Tournament.start_time).limit(3).all()
-    )
-    upcoming_tournaments = (
-        Tournament.query.filter(Tournament.status.in_(["registration_open", "closing_soon"]))
-        .order_by(Tournament.start_time).limit(6).all()
-    )
+    try:
+        live_tournaments = (
+            Tournament.query.filter_by(status="live").order_by(Tournament.start_time).limit(3).all()
+        )
+    except Exception:
+        live_tournaments = []
+
+    try:
+        upcoming_tournaments = (
+            Tournament.query.filter(Tournament.status.in_(["registration_open", "closing_soon"]))
+            .order_by(Tournament.start_time).limit(6).all()
+        )
+    except Exception:
+        upcoming_tournaments = []
+
     featured = upcoming_tournaments[0] if upcoming_tournaments else None
 
-    announcements = (
-        Announcement.query.filter_by(is_active=True)
-        .order_by(Announcement.created_at.desc()).limit(5).all()
-    )
+    try:
+        announcements = (
+            Announcement.query.filter_by(is_active=True)
+            .order_by(Announcement.created_at.desc()).limit(5).all()
+        )
+    except Exception:
+        announcements = []
 
-    top_players = (
-        PlayerStatistic.query.order_by(PlayerStatistic.total_points.desc()).limit(5).all()
-    )
+    try:
+        top_players = (
+            PlayerStatistic.query.order_by(PlayerStatistic.total_points.desc()).limit(5).all()
+        )
+    except Exception:
+        top_players = []
 
-    stats = {
-        "total_players": User.query.count(),
-        "total_teams": Team.query.count(),
-        "total_matches": Match.query.count(),
-        "total_prize_pool": db.session.query(
-            db.func.coalesce(db.func.sum(Tournament.prize_pool), 0)
-        ).scalar(),
-    }
+    try:
+        stats = {
+            "total_players": User.query.count(),
+            "total_teams": Team.query.count(),
+            "total_matches": Match.query.count(),
+            "total_prize_pool": db.session.query(
+                db.func.coalesce(db.func.sum(Tournament.prize_pool), 0)
+            ).scalar(),
+        }
+    except Exception:
+        stats = {"total_players": 0, "total_teams": 0, "total_matches": 0, "total_prize_pool": 0}
 
-    next_match = (
-        Match.query.filter(Match.status.in_(["scheduled", "upcoming"]))
-        .order_by(Match.scheduled_date, Match.scheduled_time).first()
-    )
+    try:
+        next_match = (
+            Match.query.filter(Match.status.in_(["scheduled", "upcoming"]))
+            .order_by(Match.scheduled_date, Match.scheduled_time).first()
+        )
+    except Exception:
+        next_match = None
 
     return render_template(
         "main/home.html",
@@ -83,31 +103,42 @@ def search():
     players = []
 
     if query:
-        if not search_type or search_type == "tournament":
-            tournaments = (
-                Tournament.query.filter(Tournament.name.ilike(f"%{query}%"))
-                .order_by(Tournament.start_time.desc())
-                .limit(12)
-                .all()
-            )
-        if not search_type or search_type == "team":
-            teams = (
-                Team.query.filter(
-                    Team.is_active == True,
-                    (Team.name.ilike(f"%{query}%")) | (Team.tag.ilike(f"%{query}%"))
+        try:
+            if not search_type or search_type == "tournament":
+                tournaments = (
+                    Tournament.query.filter(Tournament.name.ilike(f"%{query}%"))
+                    .order_by(Tournament.start_time.desc())
+                    .limit(12)
+                    .all()
                 )
-                .limit(12)
-                .all()
-            )
-        if not search_type or search_type == "player":
-            players = (
-                User.query.filter(
-                    (User.username.ilike(f"%{query}%"))
-                    | (User.full_name.ilike(f"%{query}%"))
+        except Exception:
+            tournaments = []
+
+        try:
+            if not search_type or search_type == "team":
+                teams = (
+                    Team.query.filter(
+                        Team.is_active == True,
+                        (Team.name.ilike(f"%{query}%")) | (Team.tag.ilike(f"%{query}%"))
+                    )
+                    .limit(12)
+                    .all()
                 )
-                .limit(12)
-                .all()
-            )
+        except Exception:
+            teams = []
+
+        try:
+            if not search_type or search_type == "player":
+                players = (
+                    User.query.filter(
+                        (User.username.ilike(f"%{query}%"))
+                        | (User.full_name.ilike(f"%{query}%"))
+                    )
+                    .limit(12)
+                    .all()
+                )
+        except Exception:
+            players = []
 
     return render_template(
         "main/search_results.html",
@@ -123,5 +154,3 @@ def search():
 def matches_redirect():
     from flask import redirect, url_for
     return redirect(url_for("competition.matches"))
-
-
