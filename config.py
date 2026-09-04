@@ -23,7 +23,15 @@ class Config:
     # DATABASE
     # ==========================================================
 
-    DATABASE_URL = os.environ.get("DATABASE_URL")
+    DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+
+    # Reject obviously fake/placeholder URLs and fall back to SQLite
+    _FAKE_HOSTS = [
+        "db.example.com", "localhost", "127.0.0.1",
+        "user:pass@", "example.com", "<", "your-"
+    ]
+    if DATABASE_URL and any(fake in DATABASE_URL for fake in _FAKE_HOSTS):
+        DATABASE_URL = ""  # Treat as not set
 
     # Fix database URL automatically
     if DATABASE_URL:
@@ -44,7 +52,7 @@ class Config:
                 1
             )
 
-    else:
+    if not DATABASE_URL:
         # Check if running on Vercel (read-only filesystem except /tmp)
         if os.environ.get("VERCEL"):
             sqlite_file = "/tmp/ff_custom_arena.db"
@@ -52,6 +60,7 @@ class Config:
             sqlite_file = os.path.join(basedir, "ff_custom_arena.db")
 
         DATABASE_URL = f"sqlite:///{sqlite_file}"
+
 
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
 

@@ -17,7 +17,11 @@ dependencies = [
     "python-dotenv",
     "requests",
     "pillow",
-    "reportlab"
+    "reportlab",
+    "email-validator",
+    "python-dateutil",
+    "itsdangerous",
+    "werkzeug"
 ]
 
 [tool.vercel]
