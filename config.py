@@ -25,13 +25,12 @@ class Config:
 
     DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
-    # Reject obviously fake/placeholder URLs and fall back to SQLite
-    _FAKE_HOSTS = [
-        "db.example.com", "localhost", "127.0.0.1",
-        "user:pass@", "example.com", "<", "your-"
-    ]
-    if DATABASE_URL and any(fake in DATABASE_URL for fake in _FAKE_HOSTS):
+    # Reject obviously fake/placeholder URLs (use simple string ops - no generator in class body)
+    if ("db.example.com" in DATABASE_URL
+            or "user:pass@" in DATABASE_URL
+            or DATABASE_URL == "postgres://user:pass@db.example.com:5432/app"):
         DATABASE_URL = ""  # Treat as not set
+
 
     # Fix database URL automatically
     if DATABASE_URL:
