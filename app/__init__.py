@@ -265,8 +265,10 @@ def create_app(config_name="development"):
 
     @login_manager.user_loader
     def load_user(user_id):
-
-        return User.query.get(int(user_id))
+        try:
+            return User.query.get(int(user_id))
+        except Exception:
+            return None
 
     # ---------- Blueprints ----------
 
@@ -367,11 +369,9 @@ def create_app(config_name="development"):
 
         unread_notifs = 0
 
-        if current_user.is_authenticated:
-
-            from app.models.notification import Notification
-
-            try:
+        try:
+            if current_user and getattr(current_user, "is_authenticated", False):
+                from app.models.notification import Notification
                 unread_notifs = (
                     Notification.query
                     .filter_by(
@@ -380,8 +380,8 @@ def create_app(config_name="development"):
                     )
                     .count()
                 )
-            except Exception:
-                unread_notifs = 0
+        except Exception:
+            unread_notifs = 0
 
         from app.models.setting import SystemSetting
 
