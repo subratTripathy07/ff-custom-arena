@@ -325,40 +325,34 @@ def create_app(config_name="development"):
     flask_app.register_blueprint(payments_bp)
     flask_app.register_blueprint(player_bp)
 
-    # ---------- Error handlers ----------
-
     @flask_app.errorhandler(404)
     def not_found(e):
-        return (
-            render_template("errors/404.html"),
-            404,
-        )
+        try:
+            return render_template("errors/404.html"), 404
+        except Exception:
+            return "<h1>404 - Page Not Found</h1>", 404
 
     @flask_app.errorhandler(403)
     def forbidden(e):
-        return (
-            render_template("errors/403.html"),
-            403,
-        )
+        try:
+            return render_template("errors/403.html"), 403
+        except Exception:
+            return "<h1>403 - Access Denied. Please <a href='/auth/login'>login</a>.</h1>", 403
 
     @flask_app.errorhandler(500)
     def server_error(e):
-
-        flask_app.logger.error(
-            f"Server error: {e}"
-        )
-
-        return (
-            render_template("errors/500.html"),
-            500,
-        )
+        flask_app.logger.error(f"Server error: {e}")
+        try:
+            return render_template("errors/500.html"), 500
+        except Exception:
+            return "<h1>500 - Server Error. Please try again.</h1>", 500
 
     @flask_app.errorhandler(429)
     def too_many_requests(e):
-        return (
-            render_template("errors/429.html"),
-            429,
-        )
+        try:
+            return render_template("errors/429.html"), 429
+        except Exception:
+            return "<h1>429 - Too Many Requests. Please slow down.</h1>", 429
 
     # ---------- Context processors ----------
 
@@ -366,42 +360,32 @@ def create_app(config_name="development"):
 
     @flask_app.context_processor
     def inject_globals():
-
         unread_notifs = 0
+        upi_id = "admin@upi"
+        upi_name = "FF Custom Arena Admin"
+        qr_code = "qr_codes/default_qr.png"
 
         try:
             if current_user and getattr(current_user, "is_authenticated", False):
                 from app.models.notification import Notification
                 unread_notifs = (
                     Notification.query
-                    .filter_by(
-                        user_id=current_user.id,
-                        is_read=False,
-                    )
+                    .filter_by(user_id=current_user.id, is_read=False)
                     .count()
                 )
         except Exception:
             unread_notifs = 0
 
-        from app.models.setting import SystemSetting
-
-        upi_id = SystemSetting.get(
-            "admin_upi_id",
-            "admin@upi",
-        )
-
-        upi_name = SystemSetting.get(
-            "admin_upi_name",
-            "FF Custom Arena Admin",
-        )
-
-        qr_code = SystemSetting.get(
-            "admin_qr_code",
-            "qr_codes/default_qr.png",
-        )
+        try:
+            from app.models.setting import SystemSetting
+            upi_id = SystemSetting.get("admin_upi_id", "admin@upi")
+            upi_name = SystemSetting.get("admin_upi_name", "FF Custom Arena Admin")
+            qr_code = SystemSetting.get("admin_qr_code", "qr_codes/default_qr.png")
+        except Exception:
+            pass
 
         return {
-            "site_name": flask_app.config["SITE_NAME"],
+            "site_name": flask_app.config.get("SITE_NAME", "FF Custom Arena"),
             "current_year": datetime.utcnow().year,
             "unread_notifications": unread_notifs,
             "admin_upi_id": upi_id,

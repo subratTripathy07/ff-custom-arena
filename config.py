@@ -216,6 +216,16 @@ class ProductionConfig(Config):
 
     DEBUG = False
 
+    # On Vercel (HTTPS), cookies must be secure for sessions to work
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
+
+    # Longer CSRF window so users don't get logged out mid-session
+    WTF_CSRF_TIME_LIMIT = 86400  # 24 hours
+
+    # Vercel serverless: use memory-based rate limiting (no Redis needed)
+    RATELIMIT_STORAGE_URI = "memory://"
+
 
 class TestingConfig(Config):
 
