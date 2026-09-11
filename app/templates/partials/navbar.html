@@ -29,7 +29,7 @@
 
     <!-- Right Actions -->
     <div class="nav-actions">
-      <button class="theme-toggle" id="themeToggle" title="Toggle Theme" type="button">
+      <button class="theme-toggle d-none-mobile" id="themeToggle" title="Toggle Theme" type="button">
         <i class="fa-solid fa-moon"></i>
       </button>
 
@@ -45,7 +45,7 @@
         <a href="{{ url_for('payments.my_payments') }}" class="wallet-pill-cyber" title="My Token Balance">
           <i class="fa-solid fa-bolt text-warning glow-pulse"></i>
           <span class="token-val">⚡ {{ "%.0f"|format(current_user.get_wallet().total_balance|default(0.0)|float) }}</span>
-          <span class="token-lbl">Tokens</span>
+          <span class="token-lbl d-none-mobile">Tokens</span>
         </a>
 
         <!-- Notification Bell -->
@@ -68,24 +68,24 @@
                    onerror="this.src='{{ url_for('static', filename='img/default_avatar.png') }}'">
               <span class="status-dot-online"></span>
             </div>
-            <span class="user-name-text">@{{ current_user.username }}</span>
+            <span class="user-name-text d-none-mobile">@{{ current_user.username }}</span>
           </a>
         </div>
 
-        <!-- Player Dashboard -->
+        <!-- Player Dashboard (Desktop Only) -->
         <a href="{{ url_for('dashboard.index') }}" class="btn-nav-dashboard d-none-mobile" title="Player Dashboard">
           <i class="fa-solid fa-gauge"></i> <span>Dashboard</span>
         </a>
 
-        <!-- Admin Control Button (Glowing Amber) -->
+        <!-- Admin Control Button (Glowing Amber - Desktop Only) -->
         {% if current_user.is_admin() %}
-          <a href="{{ url_for('admin.dashboard') }}" class="btn-nav-admin" title="Admin Control Panel">
+          <a href="{{ url_for('admin.dashboard') }}" class="btn-nav-admin d-none-mobile" title="Admin Control Panel">
             <i class="fa-solid fa-shield-halved"></i> <span>ADMIN</span>
           </a>
         {% endif %}
 
-        <!-- Logout Button (Glowing Red) -->
-        <form method="POST" action="{{ url_for('auth.logout') }}" style="display:inline;">
+        <!-- Logout Button (Glowing Red - Desktop Only) -->
+        <form method="POST" action="{{ url_for('auth.logout') }}" class="d-none-mobile" style="display:inline;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn-nav-logout" title="Logout">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>LOGOUT</span>
@@ -94,7 +94,7 @@
       {% else %}
         {% if request.blueprint != 'auth' %}
           <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Login</a>
-          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Join Now</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm d-none-mobile">Join Now</a>
         {% endif %}
       {% endif %}
 
