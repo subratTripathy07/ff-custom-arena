@@ -38,10 +38,7 @@
         <h1 style="font-size: 2.2rem; font-weight: 800;"><i class="fa-solid fa-shield-halved text-warning"></i> OPERATIONAL CONTROL CENTER</h1>
         <p class="section-sub">Manage custom tournaments, verify payment proofs, approve scores, and issue payouts.</p>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center;">
-        <button type="button" class="btn btn-secondary btn-sm" id="adminSidebarToggleBtn" title="Show / Hide Admin Menu" style="display: inline-flex; align-items: center; gap: 6px;">
-          <i class="fa-solid fa-ellipsis-vertical"></i> <span>Admin Menu</span>
-        </button>
+      <div style="display: flex; gap: 10px;">
         <a href="{{ url_for('admin.create_tournament') }}" class="btn btn-primary btn-sm">
           <i class="fa-solid fa-plus"></i> CREATE TOURNAMENT
         </a>
@@ -49,7 +46,6 @@
           <i class="fa-solid fa-file-export"></i> REPORTS
         </a>
       </div>
-
     </div>
 
     <!-- Stats Metric Cards -->

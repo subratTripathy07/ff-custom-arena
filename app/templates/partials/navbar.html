@@ -29,7 +29,6 @@
 
     <!-- Right Actions -->
     <div class="nav-actions">
-      <!-- Theme Toggle (Moon / Sun) -->
       <button class="theme-toggle d-none-mobile" id="themeToggle" title="Toggle Theme" type="button">
         <i class="fa-solid fa-moon"></i>
       </button>
@@ -59,10 +58,9 @@
           </a>
         </div>
 
-        <!-- 3-Dot & User Menu Wrapper -->
-        <div class="dropdown-3dot-wrapper" id="dropdown3DotWrapper">
-          <!-- User Profile Trigger Button -->
-          <button type="button" class="user-nav-btn-cyber" id="userNavBtn" title="Account & Admin Menu">
+        <!-- User Profile Pill -->
+        <div class="user-menu-wrapper">
+          <a href="{{ url_for('player.my_profile') }}" class="user-nav-btn-cyber" title="View Profile">
             <div class="avatar-wrap">
               <img src="{{ url_for('static', filename='img/' ~ current_user.avatar_url) if not current_user.avatar_url.startswith('avatars/') else url_for('uploaded_file', filename=current_user.avatar_url) }}" 
                    alt="{{ current_user.username }}" 
@@ -71,121 +69,28 @@
               <span class="status-dot-online"></span>
             </div>
             <span class="user-name-text d-none-mobile">@{{ current_user.username }}</span>
-          </button>
-
-          <!-- 3-Dot Action Button -->
-          <button type="button" class="btn-3dot-toggle" id="btn3DotToggle" title="Open Menu & Admin Panel" aria-label="Open Menu">
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-          </button>
-
-          <!-- Floating Cyber Dropdown Menu -->
-          <div class="cyber-dropdown-menu" id="cyberDropdownMenu">
-            <!-- User Summary Header -->
-            <div class="dropdown-user-header">
-              <div class="avatar-wrap">
-                <img src="{{ url_for('static', filename='img/' ~ current_user.avatar_url) if not current_user.avatar_url.startswith('avatars/') else url_for('uploaded_file', filename=current_user.avatar_url) }}" 
-                     alt="{{ current_user.username }}" 
-                     class="user-avatar-md"
-                     onerror="this.src='{{ url_for('static', filename='img/default_avatar.png') }}'">
-                <span class="status-dot-online"></span>
-              </div>
-              <div class="dropdown-user-details">
-                <div class="dropdown-user-name">@{{ current_user.username }}</div>
-                <div class="dropdown-user-role">
-                  {% if current_user.is_admin() %}
-                    <span class="role-badge-admin"><i class="fa-solid fa-shield-halved"></i> {{ current_user.role.name if current_user.role else 'ADMIN' }}</span>
-                  {% else %}
-                    <span class="role-badge-player"><i class="fa-solid fa-gamepad"></i> PLAYER</span>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick Balance Pill in Dropdown -->
-            <div class="dropdown-balance-card">
-              <span class="lbl"><i class="fa-solid fa-bolt text-warning"></i> Token Balance:</span>
-              <span class="val">⚡ {{ "%.0f"|format(current_user.get_wallet().total_balance|default(0.0)|float) }} Tokens</span>
-            </div>
-
-            <!-- ADMIN SECTION (If Admin) -->
-            {% if current_user.is_admin() %}
-              <div class="dropdown-section-title text-neon-warning">
-                <i class="fa-solid fa-shield-halved"></i> ADMIN CONTROL CENTER
-              </div>
-              <div class="dropdown-admin-grid">
-                <a href="{{ url_for('admin.dashboard') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-gauge"></i> <span>Overview</span>
-                </a>
-                <a href="{{ url_for('admin.create_tournament') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-plus-circle"></i> <span>New Tournament</span>
-                </a>
-                <a href="{{ url_for('admin.list_tournaments') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-trophy"></i> <span>Tournaments</span>
-                </a>
-                <a href="{{ url_for('admin.list_payments', status='verification_required') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-wallet"></i> <span>Payments</span>
-                </a>
-                <a href="{{ url_for('admin.list_results', status='under_review') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-check-to-slot"></i> <span>Verify Scores</span>
-                </a>
-                <a href="{{ url_for('admin.list_disputes', status='open') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-triangle-exclamation"></i> <span>Disputes</span>
-                </a>
-                <a href="{{ url_for('admin.list_support', status='open') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-headset"></i> <span>Tickets</span>
-                </a>
-                <a href="{{ url_for('admin.list_announcements') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-bullhorn"></i> <span>Announcements</span>
-                </a>
-                <a href="{{ url_for('admin.list_users') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-user-gear"></i> <span>Users & Roles</span>
-                </a>
-                <a href="{{ url_for('admin.reports_hub') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-chart-line"></i> <span>Reports & CSV</span>
-                </a>
-                <a href="{{ url_for('admin.list_audit_logs') }}" class="dropdown-link admin-link">
-                  <i class="fa-solid fa-list-check"></i> <span>Audit Logs</span>
-                </a>
-              </div>
-              <div class="dropdown-divider"></div>
-            {% endif %}
-
-            <!-- PLAYER & ACCOUNT SECTION -->
-            <div class="dropdown-section-title">
-              <i class="fa-solid fa-user-astronaut"></i> PLAYER MENU
-            </div>
-            <div class="dropdown-player-links">
-              <a href="{{ url_for('player.my_profile') }}" class="dropdown-link">
-                <i class="fa-solid fa-id-card"></i> <span>My Profile & Stats</span>
-              </a>
-              <a href="{{ url_for('dashboard.index') }}" class="dropdown-link">
-                <i class="fa-solid fa-gauge-high"></i> <span>Player Dashboard</span>
-              </a>
-              <a href="/my-matches" class="dropdown-link">
-                <i class="fa-solid fa-crosshairs"></i> <span>My Booked Matches</span>
-              </a>
-              <a href="{{ url_for('payments.my_payments') }}" class="dropdown-link">
-                <i class="fa-solid fa-bolt text-warning"></i> <span>Wallet & Add Money</span>
-              </a>
-              <a href="{{ url_for('support.tickets') }}" class="dropdown-link">
-                <i class="fa-solid fa-headset"></i> <span>Support Tickets</span>
-              </a>
-              <a href="{{ url_for('main.how_it_works') }}" class="dropdown-link">
-                <i class="fa-solid fa-circle-question"></i> <span>Rules & How It Works</span>
-              </a>
-            </div>
-
-            <div class="dropdown-divider"></div>
-
-            <!-- Logout Button -->
-            <form method="POST" action="{{ url_for('auth.logout') }}" style="margin: 4px 0 0 0;">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="dropdown-logout-btn">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>LOGOUT (@{{ current_user.username }})</span>
-              </button>
-            </form>
-          </div>
+          </a>
         </div>
+
+        <!-- Player Dashboard (Desktop Only) -->
+        <a href="{{ url_for('dashboard.index') }}" class="btn-nav-dashboard d-none-mobile" title="Player Dashboard">
+          <i class="fa-solid fa-gauge"></i> <span>Dashboard</span>
+        </a>
+
+        <!-- Admin Control Button (Glowing Amber - Desktop Only) -->
+        {% if current_user.is_admin() %}
+          <a href="{{ url_for('admin.dashboard') }}" class="btn-nav-admin d-none-mobile" title="Admin Control Panel">
+            <i class="fa-solid fa-shield-halved"></i> <span>ADMIN</span>
+          </a>
+        {% endif %}
+
+        <!-- Logout Button (Glowing Red - Desktop Only) -->
+        <form method="POST" action="{{ url_for('auth.logout') }}" class="d-none-mobile" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-nav-logout" title="Logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>LOGOUT</span>
+          </button>
+        </form>
       {% else %}
         {% if request.blueprint != 'auth' %}
           <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Login</a>
@@ -239,4 +144,3 @@
     </div>
   </div>
 </nav>
-
