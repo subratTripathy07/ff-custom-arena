@@ -126,99 +126,725 @@
 </div>
 
 <!-- Modal: 100% AUTOMATED INSTANT COIN TOP-UP GATEWAY -->
-<div id="addMoneyModal" style="display: none; position: fixed; inset: 0; background: rgba(5,3,15,0.92); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
-  <div style="width: 100%; max-width: 480px; background: #0c071e; border-radius: 20px; border: 1px solid rgba(124,58,237,0.5); box-shadow: 0 10px 40px rgba(0,0,0,0.9); overflow: hidden; color: #ffffff;">
+<div id="addMoneyModal" class="topup-modal-backdrop" onclick="onModalBackdropClick(event)">
+  <div class="topup-modal-card" onclick="event.stopPropagation()">
     
-    <!-- Modal Header -->
-    <div style="background: linear-gradient(135deg, #1e1b4b, #0f0826); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1);">
-      <h3 style="margin: 0; font-size: 1.2rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 10px;">
-        <i class="fa-solid fa-bolt text-warning"></i> Instant Token Top-Up Gateway
-      </h3>
-      <button type="button" onclick="closeAddMoneyModal()" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">✕</button>
+    <!-- Modal Header (Pinned) -->
+    <div class="topup-modal-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="topup-header-icon">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div>
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #ffffff; letter-spacing: -0.3px;">
+            Instant Token Top-Up
+          </h3>
+          <span style="font-size: 0.72rem; color: #a78bfa; font-weight: 600;">
+            100% Automated Zero-Admin Credit
+          </span>
+        </div>
+      </div>
+      <button type="button" class="topup-close-btn" onclick="closeAddMoneyModal()" title="Close (Esc)">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
 
-    <div style="padding: 24px;">
+    <!-- Scrollable Modal Body (Isolated Scrolling) -->
+    <div class="topup-modal-body">
       
       <!-- Exchange Rate Banner -->
-      <div style="background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.4); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-        <span style="font-size: 0.88rem; color: #cbd5e1; font-weight: 700;">Exchange Rate:</span>
-        <span style="font-size: 1rem; font-weight: 900; color: #fbbf24;">₹1 = ⚡ 1 Token / Coin</span>
+      <div class="exchange-rate-pill">
+        <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-scale-balanced text-warning"></i> Exchange Rate:
+        </span>
+        <span style="font-size: 0.95rem; font-weight: 900; color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.3);">
+          ₹1 = ⚡ 1 Token / Coin
+        </span>
       </div>
 
-      <!-- Step 1: Dynamic Custom Amount Input -->
-      <div style="margin-bottom: 18px;">
-        <label style="display: block; font-size: 0.88rem; font-weight: 800; margin-bottom: 8px; color: #e2e8f0;">Enter Custom Amount (₹):</label>
+      <!-- Step 1: Amount Selection -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 800; margin-bottom: 8px; color: #e2e8f0;">
+          1. Enter Top-Up Amount (₹):
+        </label>
         <div style="position: relative;">
-          <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.3rem; font-weight: 900; color: #fbbf24;">₹</span>
-          <input type="number" id="customDepositAmount" placeholder="Enter amount (e.g. 20, 50, 100)" min="1" step="1" value="20"
-                 oninput="updateCoinsPreview()"
-                 style="width: 100%; padding: 12px 14px 12px 38px; background: #1e1b4b; border: 2px solid #7c3aed; border-radius: 12px; color: #fff; font-size: 1.3rem; font-weight: 900; outline: none;">
+          <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1.35rem; font-weight: 900; color: #fbbf24; pointer-events: none;">₹</span>
+          <input type="number" id="customDepositAmount" placeholder="20" min="1" step="1" value="20"
+                 oninput="onAmountChanged()"
+                 class="topup-amount-input">
         </div>
       </div>
 
       <!-- Quick Amount Preset Chips -->
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">Quick Presets:</label>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-          <button type="button" onclick="selectPresetAmount(10)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹10</button>
-          <button type="button" onclick="selectPresetAmount(50)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹50</button>
-          <button type="button" onclick="selectPresetAmount(100)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹100</button>
-          <button type="button" onclick="selectPresetAmount(500)" style="background: rgba(124,58,237,0.25); color: #fff; border: 1px solid #7c3aed; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">₹500</button>
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 0.76rem; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">
+          Quick Presets:
+        </label>
+        <div class="preset-chips-grid">
+          <button type="button" class="preset-chip" onclick="selectPresetAmount(10, this)">₹10</button>
+          <button type="button" class="preset-chip active" onclick="selectPresetAmount(20, this)">₹20</button>
+          <button type="button" class="preset-chip" onclick="selectPresetAmount(50, this)">₹50</button>
+          <button type="button" class="preset-chip" onclick="selectPresetAmount(100, this)">₹100</button>
+          <button type="button" class="preset-chip" onclick="selectPresetAmount(200, this)">₹200</button>
+          <button type="button" class="preset-chip" onclick="selectPresetAmount(500, this)">₹500</button>
         </div>
       </div>
 
       <!-- Tokens Preview Box -->
-      <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 14px; text-align: center; margin-bottom: 22px;">
-        <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px;">Tokens You Will Receive Immediately:</span>
-        <div style="font-size: 1.6rem; font-weight: 900; color: #10b981;" id="tokensPreview">
+      <div class="tokens-preview-box">
+        <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+          Tokens You Will Receive Immediately:
+        </span>
+        <div class="tokens-preview-val" id="tokensPreview">
           ⚡ 20 Tokens
         </div>
       </div>
 
-      <!-- Instant Payment Gateway Action Button -->
-      <button type="button" id="payGatewayBtn" onclick="initiateAutomatedGatewayPayment()" 
-              style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; padding: 16px; border-radius: 12px; font-weight: 900; font-size: 1.05rem; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(16,185,129,0.4); display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <i class="fa-solid fa-lock"></i> PAY VIA UPI / GPAY / PHONEPE ⚡
-      </button>
+      <!-- Step 2: Payment Method Tabs -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 800; margin-bottom: 8px; color: #e2e8f0;">
+          2. Select Payment Mode:
+        </label>
+        <div class="payment-tabs-nav">
+          <button type="button" class="payment-tab-btn active" id="tabBtnApps" onclick="switchPaymentTab('apps')">
+            <i class="fa-solid fa-mobile-screen-button"></i> UPI Apps
+          </button>
+          <button type="button" class="payment-tab-btn" id="tabBtnQr" onclick="switchPaymentTab('qr')">
+            <i class="fa-solid fa-qrcode"></i> Scan QR Code
+          </button>
+          <button type="button" class="payment-tab-btn" id="tabBtnUtr" onclick="switchPaymentTab('utr')">
+            <i class="fa-solid fa-receipt"></i> Enter UTR
+          </button>
+        </div>
+      </div>
 
-      <div style="margin-top: 14px; text-align: center; font-size: 0.75rem; color: #64748b;">
+      <!-- Tab Content 1: UPI Apps & Gateway -->
+      <div id="paymentTabApps" class="payment-tab-pane active">
+        <div class="upi-apps-grid">
+          <div class="upi-app-card" onclick="initiateAutomatedGatewayPayment('gpay')">
+            <div class="upi-app-icon" style="color: #4285f4;"><i class="fa-brands fa-google-pay" style="font-size: 1.7rem;"></i></div>
+            <span class="upi-app-name">GPay</span>
+          </div>
+          <div class="upi-app-card" onclick="initiateAutomatedGatewayPayment('phonepe')">
+            <div class="upi-app-icon" style="color: #5f259f;"><i class="fa-solid fa-mobile-screen-button" style="font-size: 1.3rem;"></i></div>
+            <span class="upi-app-name">PhonePe</span>
+          </div>
+          <div class="upi-app-card" onclick="initiateAutomatedGatewayPayment('paytm')">
+            <div class="upi-app-icon" style="color: #00b9f1;"><i class="fa-solid fa-wallet" style="font-size: 1.3rem;"></i></div>
+            <span class="upi-app-name">Paytm</span>
+          </div>
+          <div class="upi-app-card" onclick="initiateAutomatedGatewayPayment('bhim')">
+            <div class="upi-app-icon" style="color: #10b981;"><i class="fa-solid fa-qrcode" style="font-size: 1.3rem;"></i></div>
+            <span class="upi-app-name">Any UPI</span>
+          </div>
+        </div>
+
+        <!-- Instant Payment Gateway Action Button -->
+        <button type="button" id="payGatewayBtn" onclick="initiateAutomatedGatewayPayment('direct')" class="pay-action-btn">
+          <i class="fa-solid fa-lock"></i>
+          <span>PAY ₹<span class="currAmtDisplay">20</span> VIA UPI GATEWAY ⚡</span>
+        </button>
+        <p style="margin: 8px 0 0; text-align: center; font-size: 0.72rem; color: #94a3b8;">
+          Opens UPI Intent on mobile. On PC/Desktop, switches to instant QR Scanner!
+        </p>
+      </div>
+
+      <!-- Tab Content 2: Dynamic QR Code -->
+      <div id="paymentTabQr" class="payment-tab-pane">
+        <div class="qr-payment-card">
+          <div style="font-size: 0.78rem; color: #cbd5e1; font-weight: 700; margin-bottom: 10px; text-align: center;">
+            Scan with any UPI App (GPay, PhonePe, Paytm, BHIM):
+          </div>
+          
+          <div class="qr-wrapper">
+            <img id="dynamicUpiQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi%3A%2F%2Fpay%3Fpa%3D{{ admin_upi_id|urlencode }}%26pn%3D{{ admin_upi_name|urlencode }}%26am%3D20%26cu%3DINR" 
+                 alt="UPI Payment QR Code" width="180" height="180" loading="lazy">
+          </div>
+
+          <!-- Copy UPI ID Row -->
+          <div class="upi-copy-box">
+            <div>
+              <span style="font-size: 0.7rem; color: #94a3b8; display: block; font-weight: 600;">Official UPI ID:</span>
+              <span id="adminUpiIdVal" style="font-weight: 800; font-family: monospace; color: #fbbf24; font-size: 0.9rem;">{{ admin_upi_id }}</span>
+            </div>
+            <button type="button" id="btnCopyUpi" onclick="copyUpiId()" class="copy-upi-btn">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+
+          <div style="margin-top: 12px; font-size: 0.75rem; color: #a78bfa; text-align: center; font-weight: 600;">
+            After payment, enter the 12-digit UTR below for instant coin credit!
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content 3 & Post-Payment: Instant UTR Verification -->
+      <div id="paymentTabUtr" class="payment-tab-pane">
+        <form action="{{ url_for('payments.add_money') }}" method="POST" id="utrClaimForm" class="utr-form-card">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="amount" id="hiddenDepositAmount" value="20">
+          <input type="hidden" name="payment_method" value="UPI">
+
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.8rem; font-weight: 800; margin-bottom: 6px; color: #e2e8f0;">
+              Paid ₹<span class="currAmtDisplay">20</span>? Enter 12-Digit UPI UTR / Ref No:
+            </label>
+            <input type="text" name="transaction_id" id="utrInputBox"
+                   placeholder="e.g. 425183920192"
+                   minlength="6" maxlength="40" required
+                   class="utr-input-field">
+          </div>
+
+          <button type="submit" id="btnSubmitUtr" class="utr-submit-btn">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>VERIFY & CLAIM ⚡<span class="currTokensDisplay">20</span> COINS NOW</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Quick UTR Shortcut footer inside modal -->
+      <div class="utr-shortcut-bar" id="utrShortcutBar">
+        <span>Already paid?</span>
+        <a href="javascript:void(0)" onclick="switchPaymentTab('utr')" style="color: #38bdf8; font-weight: 800; text-decoration: underline;">
+          Enter UTR for Instant Coin Credit &rarr;
+        </a>
+      </div>
+
+      <!-- Trust & Security Footer -->
+      <div style="margin-top: 16px; text-align: center; font-size: 0.72rem; color: #64748b; display: flex; align-items: center; justify-content: center; gap: 6px;">
         <i class="fa-solid fa-shield-halved text-success"></i> 100% Encrypted & Automated Zero-Admin Webhook Credit
       </div>
+
     </div>
 
   </div>
 </div>
 
+<style>
+  /* ==========================================================
+     TOP-UP MODAL STYLES (NO BACKGROUND SCROLLING LEAK)
+     ========================================================== */
+  .topup-modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(3, 1, 10, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .topup-modal-card {
+    width: 100%;
+    max-width: 480px;
+    margin: auto;
+    background: linear-gradient(180deg, #13092d 0%, #0c061d 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 35px rgba(124, 58, 237, 0.25);
+    overflow: hidden;
+    color: #ffffff;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    animation: topupPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+
+  @keyframes topupPop {
+    0% { opacity: 0; transform: scale(0.94) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .topup-modal-header {
+    background: linear-gradient(135deg, #1e1b4b, #0f0826);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+
+  .topup-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.1rem;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+  }
+
+  .topup-close-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .topup-close-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+    color: #fff;
+    transform: rotate(90deg);
+  }
+
+  .topup-modal-body {
+    padding: 20px 22px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    flex: 1;
+  }
+
+  .topup-modal-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  .topup-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.35);
+    border-radius: 3px;
+  }
+
+  .exchange-rate-pill {
+    background: rgba(124, 58, 237, 0.15);
+    border: 1px solid rgba(124, 58, 237, 0.45);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topup-amount-input {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    background: #190f33;
+    border: 2px solid #7c3aed;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.35rem;
+    font-weight: 900;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+  }
+  .topup-amount-input:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 16px rgba(124, 58, 237, 0.5);
+  }
+
+  .preset-chips-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  @media (max-width: 480px) {
+    .preset-chips-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .preset-chip {
+    background: rgba(124, 58, 237, 0.2);
+    color: #e2e8f0;
+    border: 1px solid rgba(124, 58, 237, 0.5);
+    padding: 9px 4px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+  }
+  .preset-chip:hover {
+    background: rgba(124, 58, 237, 0.4);
+    border-color: #a78bfa;
+    color: #fff;
+  }
+  .preset-chip.active {
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+    border-color: #c084fc;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
+  }
+
+  .tokens-preview-box {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .tokens-preview-val {
+    font-size: 1.55rem;
+    font-weight: 900;
+    color: #34d399;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Payment Method Tabs */
+  .payment-tabs-nav {
+    display: flex;
+    background: rgba(15, 8, 38, 0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .payment-tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    padding: 8px 6px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  .payment-tab-btn:hover {
+    color: #fff;
+  }
+  .payment-tab-btn.active {
+    background: #7c3aed;
+    color: #ffffff;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+  }
+
+  .payment-tab-pane {
+    display: none;
+    animation: fadeInTab 0.2s ease;
+  }
+  .payment-tab-pane.active {
+    display: block;
+  }
+  @keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* UPI Apps Grid */
+  .upi-apps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .upi-app-card {
+    background: rgba(30, 27, 75, 0.6);
+    border: 1px solid rgba(124, 58, 237, 0.35);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .upi-app-card:hover {
+    background: rgba(124, 58, 237, 0.3);
+    border-color: #a78bfa;
+    transform: translateY(-2px);
+  }
+  .upi-app-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    display: block;
+    margin-top: 4px;
+  }
+
+  .pay-action-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 1.02rem;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .pay-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.6);
+  }
+  .pay-action-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* Dynamic QR Tab */
+  .qr-payment-card {
+    background: rgba(19, 9, 45, 0.7);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .qr-wrapper {
+    background: #ffffff;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    margin-bottom: 12px;
+  }
+  .upi-copy-box {
+    width: 100%;
+    background: #170d36;
+    border: 1px dashed rgba(167, 139, 250, 0.4);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .copy-upi-btn {
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .copy-upi-btn:hover {
+    background: #9333ea;
+  }
+
+  /* UTR Form */
+  .utr-form-card {
+    background: rgba(19, 9, 45, 0.8);
+    border: 1px solid rgba(124, 58, 237, 0.35);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .utr-input-field {
+    width: 100%;
+    padding: 12px 14px;
+    background: #170c36;
+    border: 1.5px solid #7c3aed;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    outline: none;
+    box-sizing: border-box;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+  }
+  .utr-input-field:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+  }
+  .utr-submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+    transition: all 0.2s;
+  }
+  .utr-submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+  }
+
+  .utr-shortcut-bar {
+    margin-top: 14px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 10px;
+    padding: 9px 12px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+</style>
+
 <script>
+  let currentTopupAmount = 20;
+  const adminUpiId = "{{ admin_upi_id }}";
+  const adminUpiName = "{{ admin_upi_name }}";
+
   function openAddMoneyModal() {
-    document.getElementById('addMoneyModal').style.display = 'flex';
+    const modal = document.getElementById('addMoneyModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      // LOCK BACKGROUND SCROLLING COMPLETELY
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    }
     updateCoinsPreview();
   }
 
   function closeAddMoneyModal() {
-    document.getElementById('addMoneyModal').style.display = 'none';
+    const modal = document.getElementById('addMoneyModal');
+    if (modal) {
+      modal.style.display = 'none';
+      // RESTORE BACKGROUND SCROLLING
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
   }
 
-  function selectPresetAmount(amt) {
-    const input = document.getElementById('customDepositAmount');
-    if (input) {
-      input.value = amt;
-      updateCoinsPreview();
+  function onModalBackdropClick(e) {
+    if (e.target.id === 'addMoneyModal') {
+      closeAddMoneyModal();
     }
+  }
+
+  // Close on Escape key
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeAddMoneyModal();
+    }
+  });
+
+  function selectPresetAmount(amt, el) {
+    currentTopupAmount = amt;
+    const input = document.getElementById('customDepositAmount');
+    if (input) input.value = amt;
+
+    // Highlight active chip
+    document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    updateCoinsPreview();
+  }
+
+  function onAmountChanged() {
+    const input = document.getElementById('customDepositAmount');
+    let val = parseInt(input ? input.value : 0) || 0;
+    if (val < 1) val = 1;
+    currentTopupAmount = val;
+
+    // Update active preset button highlight
+    document.querySelectorAll('.preset-chip').forEach(c => {
+      const chipAmt = parseInt(c.innerText.replace('₹', ''));
+      if (chipAmt === currentTopupAmount) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+
+    updateCoinsPreview();
   }
 
   function updateCoinsPreview() {
-    const input = document.getElementById('customDepositAmount');
+    const amt = currentTopupAmount || 20;
+
+    // Update previews
     const preview = document.getElementById('tokensPreview');
-    const amt = parseInt(input ? input.value : 0) || 0;
-    if (preview) {
-      preview.innerHTML = `⚡ ${amt} Tokens`;
+    if (preview) preview.innerHTML = `⚡ ${amt} Tokens`;
+
+    document.querySelectorAll('.currAmtDisplay').forEach(el => el.innerText = amt);
+    document.querySelectorAll('.currTokensDisplay').forEach(el => el.innerText = amt);
+
+    const hiddenAmt = document.getElementById('hiddenDepositAmount');
+    if (hiddenAmt) hiddenAmt.value = amt;
+
+    // Refresh dynamic QR code
+    const qrImg = document.getElementById('dynamicUpiQrImg');
+    if (qrImg) {
+      const upiUrl = `upi://pay?pa=${encodeURIComponent(adminUpiId)}&pn=${encodeURIComponent(adminUpiName)}&am=${amt}&cu=INR&tn=TokensTopup`;
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`;
     }
   }
 
-  function initiateAutomatedGatewayPayment() {
-    const amountInput = document.getElementById('customDepositAmount');
-    const amount = parseFloat(amountInput ? amountInput.value : 0);
+  function switchPaymentTab(tab) {
+    document.querySelectorAll('.payment-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.payment-tab-pane').forEach(p => p.classList.remove('active'));
+
+    if (tab === 'apps') {
+      const b = document.getElementById('tabBtnApps');
+      const p = document.getElementById('paymentTabApps');
+      if (b) b.classList.add('active');
+      if (p) p.classList.add('active');
+    } else if (tab === 'qr') {
+      const b = document.getElementById('tabBtnQr');
+      const p = document.getElementById('paymentTabQr');
+      if (b) b.classList.add('active');
+      if (p) p.classList.add('active');
+    } else if (tab === 'utr') {
+      const b = document.getElementById('tabBtnUtr');
+      const p = document.getElementById('paymentTabUtr');
+      if (b) b.classList.add('active');
+      if (p) p.classList.add('active');
+      const inp = document.getElementById('utrInputBox');
+      if (inp) setTimeout(() => inp.focus(), 150);
+    }
+  }
+
+  function copyUpiId() {
+    const upiText = document.getElementById('adminUpiIdVal')?.innerText || adminUpiId;
+    navigator.clipboard.writeText(upiText).then(() => {
+      const btn = document.getElementById('btnCopyUpi');
+      if (btn) {
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        btn.style.background = '#10b981';
+        setTimeout(() => {
+          btn.innerHTML = oldHtml;
+          btn.style.background = '';
+        }, 2000);
+      }
+    }).catch(() => {
+      alert("UPI ID: " + upiText);
+    });
+  }
+
+  function initiateAutomatedGatewayPayment(appType) {
+    const amount = currentTopupAmount || 20;
 
     if (!amount || amount <= 0) {
       alert("Please enter a valid deposit amount (minimum ₹1).");
@@ -226,8 +852,10 @@
     }
 
     const btn = document.getElementById('payGatewayBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GENERATING GATEWAY CHECKOUT...';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GENERATING GATEWAY CHECKOUT...';
+    }
 
     // Call Automated Order Creation API
     fetch('/api/create-topup-order', {
@@ -242,21 +870,33 @@
     })
     .then(res => res.json())
     .then(data => {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-lock"></i> PAY VIA UPI / GPAY / PHONEPE ⚡';
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-lock"></i> <span>PAY ₹${amount} VIA UPI GATEWAY ⚡</span>`;
+      }
 
       if (data.success && data.data && data.data.upi_intent) {
         const upiUri = data.data.upi_intent;
-        // Direct launch of UPI Intent on Mobile/Desktop or Gateway
-        window.location.href = upiUri;
+        
+        // Detect if mobile device
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.href = upiUri;
+        } else {
+          // On PC/Desktop, open QR Code tab for immediate scan
+          switchPaymentTab('qr');
+        }
       } else if (data.message) {
         alert("Gateway Notice: " + data.message);
       }
     })
     .catch(err => {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-lock"></i> PAY VIA UPI / GPAY / PHONEPE ⚡';
-      alert("Connection error connecting to payment gateway.");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-lock"></i> <span>PAY ₹${amount} VIA UPI GATEWAY ⚡</span>`;
+      }
+      // Switch to QR Tab as reliable fallback
+      switchPaymentTab('qr');
     });
   }
 

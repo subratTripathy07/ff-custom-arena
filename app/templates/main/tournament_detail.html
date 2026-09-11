@@ -627,12 +627,18 @@
 
   function openPositionModal() {
     const modal = document.getElementById('positionSelectorModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   function closePositionModal() {
     const modal = document.getElementById('positionSelectorModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
   }
 
   function onSelectPositionSlot(chk) {
@@ -668,12 +674,18 @@
     }
 
     const modal = document.getElementById('joiningMatchModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   function closeJoiningModal() {
     const modal = document.getElementById('joiningMatchModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
   }
 
   function submitJoinedMatchForm() {
@@ -800,12 +812,18 @@
     if (document.getElementById('gatewayOrderIdText')) document.getElementById('gatewayOrderIdText').innerText = order.order_id;
     if (document.getElementById('gatewayAmountText')) document.getElementById('gatewayAmountText').innerText = order.amount;
     const modal = document.getElementById('gatewayCheckoutModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   function closeGatewayModal() {
     const modal = document.getElementById('gatewayCheckoutModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
   }
 
   function simulateGatewaySuccess(method) {
@@ -852,7 +870,10 @@
     const modal = document.getElementById('paymentSuccessModal');
     if (document.getElementById('successTxId')) document.getElementById('successTxId').innerText = data.transaction_id || data.order_id;
     if (document.getElementById('successRegCode')) document.getElementById('successRegCode').innerText = data.registration_code || ('REG-#' + data.registration_id);
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   function switchTab(tabName) {
