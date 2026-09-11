@@ -302,8 +302,238 @@
   color: #ffffff;
   border-color: #f87171;
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+/* ============================================================
+   ⋮ 3-DOT ACTION & CYBER DROPDOWN MENU SYSTEM
+   ============================================================ */
+.dropdown-3dot-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+
+/* 3-Dot Button */
+.btn-3dot-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(15, 10, 32, 0.85);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn-3dot-toggle:hover,
+.btn-3dot-toggle.active {
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.25);
+  border-color: #a78bfa;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.45);
+  transform: scale(1.06);
+}
+
+/* Floating Cyber Dropdown Menu */
+.cyber-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 310px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: rgba(11, 7, 24, 0.98);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(124, 58, 237, 0.2);
+  padding: 14px;
+  z-index: 99999;
+  animation: dropdown-fade-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cyber-dropdown-menu.show {
+  display: block !important;
+}
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* User Header Inside Dropdown */
+.dropdown-user-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+}
+.user-avatar-md {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #a78bfa;
+}
+.dropdown-user-details {
+  flex: 1;
+  overflow: hidden;
+}
+.dropdown-user-name {
+  font-weight: 800;
+  font-size: 0.96rem;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.role-badge-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.role-badge-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #c084fc;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+/* Quick Balance Pill in Dropdown */
+.dropdown-balance-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+  padding: 8px 12px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+.dropdown-balance-card .lbl {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+.dropdown-balance-card .val {
+  color: #fbbf24;
+  font-weight: 900;
+  font-size: 0.88rem;
+}
+
+/* Section Titles */
+.dropdown-section-title {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin: 10px 0 6px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Admin Grid Layout inside Dropdown */
+.dropdown-admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+/* Dropdown Links */
+.dropdown-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: all 0.18s ease;
+}
+.dropdown-link:hover {
+  background: rgba(139, 92, 246, 0.18);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+.dropdown-link i {
+  font-size: 0.9rem;
+  width: 16px;
+  text-align: center;
+  color: #a78bfa;
+}
+
+.dropdown-link.admin-link {
+  font-size: 0.78rem;
+  padding: 7px 8px;
+}
+.dropdown-link.admin-link:hover {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+}
+.dropdown-link.admin-link i {
+  color: #fbbf24;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(139, 92, 246, 0.2);
+  margin: 8px 0;
+}
+
+/* Dropdown Logout Button */
+.dropdown-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.3));
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dropdown-logout-btn:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(185, 28, 28, 0.5));
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
 .d-none-mobile { display: inline-flex; }
+
 .mobile-menu-toggle {
   display: none;
   background: transparent;
@@ -602,7 +832,14 @@
 .achievement-icon { font-size: 2.2rem; flex-shrink: 0; color: var(--accent-gold); }
 
 /* ---- Admin Shell ---- */
-.admin-shell { display: flex; min-height: 88vh; }
+.admin-shell {
+  display: flex;
+  min-height: 88vh;
+  transition: all 0.25s ease;
+}
+.admin-shell.sidebar-collapsed .admin-sidebar {
+  display: none !important;
+}
 .admin-sidebar {
   width: 240px;
   background: rgba(11, 9, 22, 0.95);
@@ -612,7 +849,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  transition: all 0.25s ease;
 }
+
 .admin-sidebar-nav a {
   display: flex;
   align-items: center;

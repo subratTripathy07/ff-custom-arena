@@ -45,6 +45,62 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ---------- 2b. Cyber 3-Dot & User Dropdown Menu Toggle ----------
+document.addEventListener('DOMContentLoaded', () => {
+  const btn3Dot = document.getElementById('btn3DotToggle');
+  const userBtn = document.getElementById('userNavBtn');
+  const dropdown = document.getElementById('cyberDropdownMenu');
+  const wrapper = document.getElementById('dropdown3DotWrapper');
+
+  function toggleDropdown(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (dropdown) {
+      const isOpen = dropdown.classList.toggle('show');
+      if (btn3Dot) {
+        btn3Dot.classList.toggle('active', isOpen);
+      }
+    }
+  }
+
+  if (btn3Dot) {
+    btn3Dot.addEventListener('click', toggleDropdown);
+  }
+  if (userBtn) {
+    userBtn.addEventListener('click', toggleDropdown);
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (dropdown && dropdown.classList.contains('show')) {
+      if (wrapper && !wrapper.contains(e.target)) {
+        dropdown.classList.remove('show');
+        if (btn3Dot) btn3Dot.classList.remove('active');
+      }
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dropdown && dropdown.classList.contains('show')) {
+      dropdown.classList.remove('show');
+      if (btn3Dot) btn3Dot.classList.remove('active');
+    }
+// ---------- 2c. Admin Sidebar Toggle ----------
+document.addEventListener('DOMContentLoaded', () => {
+  const adminToggleBtn = document.getElementById('adminSidebarToggleBtn');
+  const adminShell = document.querySelector('.admin-shell');
+  if (adminToggleBtn && adminShell) {
+    adminToggleBtn.addEventListener('click', () => {
+      adminShell.classList.toggle('sidebar-collapsed');
+    });
+  }
+});
+
+
+
 // ---------- 3. Toast Notifications Generator ----------
 function showToast(message, type = 'info', icon = 'fa-circle-info') {
   let stack = document.getElementById('toastStack');
