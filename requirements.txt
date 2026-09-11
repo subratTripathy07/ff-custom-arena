@@ -53,5 +53,8 @@ Pillow==10.4.0
 # ── Reports ───────────────────────────────────────────────────────────────────
 reportlab==5.0.0
 
-# ── Production Server (not used on Vercel) ────────────────────────────────────
+# ── Production Server (Railway / Persistent Server) ──────────────────────────
 gunicorn==22.0.0
+eventlet==0.36.1
+dnspython==2.8.0
+

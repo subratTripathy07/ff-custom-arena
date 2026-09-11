@@ -43,10 +43,13 @@ if os.environ.get("VERCEL"):
     socketio = _DummySocketIO()
 else:
     from flask_socketio import SocketIO
+    # Auto-detect: uses eventlet when running with gunicorn on Railway, threading locally
+    _async_mode = "eventlet" if (os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("GUNICORN_CMD_ARGS")) else None
     socketio = SocketIO(
         cors_allowed_origins="*",
-        async_mode="threading"
+        async_mode=_async_mode
     )
+
 
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."

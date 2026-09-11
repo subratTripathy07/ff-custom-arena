@@ -11,7 +11,11 @@ from app import create_app
 from app.extensions import socketio
 
 # FF Custom Arena Server Configuration
-app = create_app(os.environ.get("FLASK_ENV", "development"))
+env = os.environ.get("FLASK_ENV")
+if not env:
+    env = "production" if (os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_STATIC_URL")) else "development"
+app = create_app(env)
+
 
 def open_browser(port):
     try:
